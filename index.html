@@ -1,0 +1,2110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Outside Event · Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg:#12151b;
+    --surface:#191d26;
+    --surface2:#20252f;
+    --surface3:#272d3a;
+    --border:#2c3241;
+    --accent:#f5a623;        /* Outbound — amber, "scan out" */
+    --accent-dim:#7a531d;
+    --cyan:#2dd4c8;          /* Inbound — cyan, "scan back" */
+    --cyan-dim:#155c56;
+    --purple:#8b7cf6;
+    --danger:#e5484d;
+    --success:#33c17a;
+    --text:#eef0f4;
+    --muted:#828a9b;
+    --muted2:#565d6c;
+    --font-disp:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'IBM Plex Mono',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--text);font-family:var(--font-body);
+    min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  .barcode{
+    height:10px;width:100%;
+    background:repeating-linear-gradient(90deg,var(--muted2) 0 2px,transparent 2px 5px,var(--muted2) 5px 6px,transparent 6px 11px,var(--muted2) 11px 14px,transparent 14px 17px);
+    opacity:.5;
+  }
+  .barcode.accent{background:repeating-linear-gradient(90deg,var(--accent) 0 2px,transparent 2px 5px,var(--accent) 5px 6px,transparent 6px 11px,var(--accent) 11px 14px,transparent 14px 17px);opacity:.7}
+  .barcode.cyan{background:repeating-linear-gradient(90deg,var(--cyan) 0 2px,transparent 2px 5px,var(--cyan) 5px 6px,transparent 6px 11px,var(--cyan) 11px 14px,transparent 14px 17px);opacity:.7}
+
+  header{
+    background:var(--surface);border-bottom:1px solid var(--border);
+    padding:16px 24px;display:flex;align-items:center;justify-content:space-between;
+    position:sticky;top:0;z-index:100;
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand-mark{
+    width:34px;height:34px;border-radius:8px;
+    background:repeating-linear-gradient(90deg,var(--text) 0 2px,transparent 2px 4px);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .brand h1{font-family:var(--font-disp);font-size:1.05rem;font-weight:700;letter-spacing:-.01em}
+  .brand span{display:block;font-size:.68rem;color:var(--muted);font-weight:500;margin-top:1px}
+  .hdr-right{display:flex;align-items:center;gap:10px;font-size:.78rem;color:var(--muted)}
+  .btn-back{
+    background:var(--surface2);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:8px 14px;font-family:var(--font-disp);font-weight:600;
+    font-size:.8rem;cursor:pointer;display:flex;align-items:center;gap:6px;
+  }
+  .btn-back:hover{border-color:var(--muted2)}
+
+  .app{max-width:1360px;margin:0 auto;padding:32px 20px 60px}
+  .view{display:none}
+  .view.active{display:block}
+
+  /* ══ MAIN / KIOSK ══ */
+  .kiosk{max-width:620px;margin:40px auto 0}
+  .kiosk-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    overflow:hidden;
+  }
+  .kiosk-hero{padding:28px 30px 22px;position:relative;overflow:hidden}
+  .kiosk-hero::before{
+    content:'';position:absolute;inset:0;
+    background:repeating-linear-gradient(90deg,var(--surface3) 0 3px,transparent 3px 7px);
+    opacity:.25; mask:linear-gradient(90deg,black,transparent 60%);
+  }
+  .kiosk-hero h2{font-family:var(--font-disp);font-size:1.5rem;font-weight:700;position:relative}
+  .kiosk-hero p{color:var(--muted);font-size:.85rem;margin-top:6px;position:relative}
+
+  .kiosk-body{padding:24px 30px 30px;display:flex;flex-direction:column;gap:22px}
+  .field-block label{
+    display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.09em;
+    color:var(--muted);font-weight:600;margin-bottom:8px;
+  }
+  .segmented{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .segmented button{
+    flex:1;padding:12px;border:none;background:transparent;color:var(--muted);
+    font-family:var(--font-disp);font-weight:600;font-size:.88rem;cursor:pointer;transition:.15s;
+  }
+  .segmented button.active{background:var(--accent);color:#1a1206}
+  .segmented button.active.inbound-active{background:var(--cyan);color:#062421}
+  .segmented button.active.cmp-active{background:var(--purple);color:#1b1330}
+
+  .cmp-paste-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px 18px}
+  @media (max-width:700px){.cmp-paste-grid{grid-template-columns:1fr}}
+  .cmp-paste-field label{display:block;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px}
+  .cmp-textarea{
+    width:100%;min-height:180px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);font-family:var(--font-mono);font-size:.82rem;padding:10px 12px;outline:none;resize:vertical;
+  }
+  .cmp-textarea:focus{border-color:var(--purple)}
+  .cmp-actions{padding:0 18px 16px;display:flex;gap:10px}
+  .btn-cmp{
+    background:var(--purple);color:#1b1330;border:none;border-radius:8px;padding:10px 20px;
+    font-family:var(--font-disp);font-weight:700;font-size:.83rem;cursor:pointer;white-space:nowrap;
+  }
+  .btn-cmp:hover{opacity:.88}
+  .segmented button:not(.active):hover{color:var(--text)}
+
+  .radio-row{display:flex;gap:14px}
+  .radio-opt{
+    flex:1;display:flex;align-items:center;gap:10px;padding:12px 14px;
+    background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+    cursor:pointer;font-size:.85rem;transition:.15s;
+  }
+  .radio-opt:hover{border-color:var(--muted2)}
+  .radio-opt.selected{border-color:var(--accent);background:rgba(245,166,35,.08)}
+  .radio-opt input{accent-color:var(--accent)}
+
+  .events-panel{
+    border:1px solid var(--border);border-radius:10px;overflow:hidden;
+    max-height:260px;overflow-y:auto;
+  }
+  .event-item{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;
+    background:var(--surface2);transition:.15s;
+  }
+  .event-item:last-child{border-bottom:none}
+  .event-item:hover{background:var(--surface3)}
+  .event-item.selected{background:rgba(245,166,35,.1);box-shadow:inset 3px 0 0 var(--accent)}
+  .event-item .ei-name{font-weight:600;font-size:.86rem}
+  .event-item .ei-meta{font-size:.72rem;color:var(--muted);font-family:var(--font-mono)}
+  .event-item.new-entry{background:transparent;justify-content:flex-start;color:var(--cyan);font-weight:600;gap:8px}
+  .events-empty{padding:20px;text-align:center;color:var(--muted);font-size:.8rem}
+
+  .btn-start{
+    background:var(--accent);color:#1a1206;border:none;border-radius:10px;
+    padding:15px;font-family:var(--font-disp);font-weight:700;font-size:.95rem;
+    cursor:pointer;transition:.15s;
+  }
+  .btn-start:hover{opacity:.88}
+  .btn-start:disabled{background:var(--surface3);color:var(--muted2);cursor:not-allowed}
+
+  /* ══ SHARED WORK VIEWS ══ */
+  .work-topbar{
+    display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:18px 20px;margin-bottom:20px;
+  }
+  .field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:160px}
+  .field label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+  .field input,.field select{
+    background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);font-family:var(--font-mono);font-size:.88rem;padding:10px 12px;outline:none;
+  }
+  .field input:focus,.field select:focus{border-color:var(--accent)}
+  .field input:read-only{color:var(--muted);background:var(--surface3)}
+
+  .main-grid{display:grid;grid-template-columns:1fr 340px;gap:18px}
+  @media (max-width:960px){.main-grid{grid-template-columns:1fr}}
+
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .panel-header{
+    padding:13px 18px;border-bottom:1px solid var(--border);background:var(--surface2);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .panel-title{font-family:var(--font-disp);font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--text)}
+  .panel-count{font-size:.72rem;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-family:var(--font-mono)}
+
+  .scan-zone{padding:15px 18px;border-bottom:1px solid var(--border);display:flex;gap:10px}
+  .scan-zone input{
+    flex:1;background:var(--surface2);border:2px solid var(--accent);border-radius:8px;
+    color:var(--text);font-family:var(--font-mono);font-size:1rem;padding:10px 14px;outline:none;
+  }
+  .scan-zone.cyan input{border-color:var(--cyan)}
+  .scan-zone .btn-add{
+    background:var(--accent);color:#1a1206;border:none;border-radius:8px;padding:10px 18px;
+    font-family:var(--font-disp);font-weight:700;font-size:.82rem;cursor:pointer;white-space:nowrap;
+  }
+  .scan-zone.cyan .btn-add{background:var(--cyan);color:#062421}
+  .scan-zone .btn-cam{
+    background:var(--surface3);color:var(--text);border:1px solid var(--border);border-radius:8px;
+    padding:10px 14px;font-size:1rem;cursor:pointer;white-space:nowrap;line-height:1;
+  }
+  .scan-zone .btn-cam:hover{border-color:var(--muted2)}
+
+  /* ── CAMERA SCAN MODAL ── */
+  .cam-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;
+    justify-content:center;z-index:600;opacity:0;pointer-events:none;transition:.2s;padding:20px;
+  }
+  .cam-overlay.open{opacity:1;pointer-events:all}
+  .cam-modal{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    width:100%;max-width:480px;overflow:hidden;
+  }
+  .cam-header{
+    padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;
+    justify-content:space-between;background:var(--surface2);
+  }
+  .cam-title{font-family:var(--font-disp);font-weight:700;font-size:.85rem}
+  .cam-close{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;line-height:1;padding:4px 8px}
+  .cam-close:hover{color:var(--text)}
+  .cam-video-wrap{position:relative;background:#000;aspect-ratio:4/3;overflow:hidden}
+  .cam-video-wrap video{width:100%;height:100%;object-fit:cover;display:block}
+  .cam-reticle{
+    position:absolute;inset:18% 10%;border:2px solid var(--accent);border-radius:10px;pointer-events:none;
+  }
+  .cam-status{padding:12px 18px;font-size:.8rem;color:var(--muted);text-align:center;border-top:1px solid var(--border)}
+  .cam-status.detected{color:var(--success);font-weight:700}
+  .cam-status.error{color:var(--danger)}
+
+  table{width:100%;border-collapse:collapse}
+  th{
+    background:var(--surface2);padding:8px 14px;font-size:.68rem;text-transform:uppercase;
+    letter-spacing:.07em;color:var(--muted);text-align:left;position:sticky;top:0;
+  }
+  td{padding:9px 14px;font-size:.85rem;border-bottom:1px solid var(--border);font-family:var(--font-mono)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--surface2)}
+  .list-wrap{max-height:380px;overflow-y:auto}
+  .col-num{color:var(--muted);text-align:center;width:40px}
+  .col-del{width:44px;text-align:center}
+  .btn-del{background:none;border:none;color:var(--danger);cursor:pointer;font-size:1rem;border-radius:6px;padding:4px 8px}
+  .btn-del:hover{background:rgba(229,72,77,.13)}
+  .btn-edit{background:none;border:none;color:var(--accent);cursor:pointer;font-size:1rem;border-radius:6px;padding:4px 8px}
+  .btn-edit:hover{background:rgba(245,166,35,.13)}
+  .row-actions{display:flex;gap:2px;justify-content:flex-end}
+  .edit-qty-input{
+    width:70px;background:var(--surface3);border:1px solid var(--accent);border-radius:6px;
+    color:var(--text);font-family:var(--font-mono);font-size:.85rem;padding:5px 8px;outline:none;
+  }
+  .btn-mini-save{background:var(--success);color:#08210f;border:none;border-radius:6px;padding:5px 9px;font-family:var(--font-disp);font-weight:700;font-size:.72rem;cursor:pointer}
+  .btn-mini-cancel{background:var(--surface3);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:5px 9px;font-family:var(--font-disp);font-weight:600;font-size:.72rem;cursor:pointer}
+  .empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:.83rem}
+  .empty .ic{font-size:2.2rem;display:block;margin-bottom:8px;opacity:.4}
+
+  .qty-badge{background:rgba(245,166,35,.16);color:var(--accent);border-radius:5px;padding:1px 9px;font-weight:700;font-family:var(--font-mono);font-size:.8rem}
+  .qty-badge.cyan{background:rgba(45,212,200,.15);color:var(--cyan)}
+  .diff-pos{color:var(--success);font-weight:700}
+  .diff-zero{color:var(--muted)}
+  .diff-neg{color:var(--danger);font-weight:700}
+
+  .summary-total{
+    padding:11px 14px;background:var(--surface2);border-top:2px solid var(--border);
+    display:flex;justify-content:space-between;font-size:.82rem;font-family:var(--font-body);
+  }
+  .total-label{color:var(--muted)}
+  .total-val{font-weight:700;color:var(--accent);font-size:1rem;font-family:var(--font-mono)}
+  .error-count-row{
+    padding:8px 14px;background:rgba(229,72,77,.1);color:var(--danger);
+    font-size:.78rem;font-weight:700;text-align:center;border-top:1px solid var(--border);
+  }
+
+  .save-bar{
+    padding:15px 18px;border-top:1px solid var(--border);background:var(--surface2);
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  }
+  .btn-save{
+    background:var(--success);color:#08210f;border:none;border-radius:8px;padding:10px 20px;
+    font-family:var(--font-disp);font-weight:700;font-size:.83rem;cursor:pointer;white-space:nowrap;
+  }
+  .btn-save:hover{opacity:.88}
+  .btn-ghost{
+    background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;
+    padding:10px 16px;font-family:var(--font-disp);font-weight:600;font-size:.8rem;cursor:pointer;
+  }
+  .btn-ghost:hover{border-color:var(--muted2);color:var(--text)}
+
+  .inline-note{font-size:.73rem;color:var(--muted);padding:8px 18px;border-top:1px solid var(--border);background:rgba(255,255,255,.02);line-height:1.5}
+
+  /* Inbound-specific */
+  .filter-bar{display:flex;gap:10px;padding:15px 18px;border-bottom:1px solid var(--border)}
+  .filter-bar input{
+    flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);font-family:var(--font-mono);padding:10px 12px;outline:none;
+  }
+  .filter-bar button{
+    background:var(--cyan);color:#062421;border:none;border-radius:8px;padding:10px 16px;
+    font-family:var(--font-disp);font-weight:700;font-size:.8rem;cursor:pointer;white-space:nowrap;
+  }
+  .event-select-list{max-height:180px;overflow-y:auto;padding:0 18px 15px}
+
+  .sold-block{padding:15px 18px;display:flex;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+  .sold-block select{flex:2;min-width:140px}
+  .sold-block input{flex:1;min-width:90px}
+  .sold-block select,.sold-block input{
+    background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);font-family:var(--font-mono);padding:10px 12px;outline:none;
+  }
+  .sold-block button{
+    background:var(--accent);color:#1a1206;border:none;border-radius:8px;padding:10px 16px;
+    font-family:var(--font-disp);font-weight:700;font-size:.8rem;cursor:pointer;white-space:nowrap;
+  }
+
+  .chart-wrap{padding:18px}
+
+  /* ── Searchable UPC combobox (Register Sales) ── */
+  .combo-wrap{position:relative;flex:2;min-width:160px}
+  .combo-input{
+    width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);font-family:var(--font-mono);font-size:.86rem;padding:10px 12px;outline:none;
+  }
+  .combo-input:focus{border-color:var(--accent)}
+  .combo-input.cmp-input:focus{border-color:var(--purple)}
+  .combo-dropdown{
+    position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:50;
+    background:var(--surface3);border:1px solid var(--border);border-radius:8px;
+    max-height:220px;overflow-y:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,.35);
+  }
+  .combo-dropdown.open{display:block}
+  .combo-opt{
+    padding:9px 12px;font-size:.82rem;font-family:var(--font-mono);cursor:pointer;
+    display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);
+  }
+  .combo-opt:last-child{border-bottom:none}
+  .combo-opt:hover,.combo-opt.active{background:var(--surface2)}
+  .combo-opt .co-avail{color:var(--muted);font-size:.74rem;white-space:nowrap}
+  .combo-empty{padding:12px;font-size:.8rem;color:var(--muted);text-align:center}
+
+  /* ── Comparison table filters ── */
+  .cmp-filter-bar{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    padding:12px 18px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.015);
+  }
+  .cmp-filter-bar input[type="text"]{
+    flex:1;min-width:140px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);font-family:var(--font-mono);font-size:.83rem;padding:9px 12px;outline:none;
+  }
+  .cmp-filter-bar input[type="text"]:focus{border-color:var(--cyan)}
+  .cmp-filter-check{
+    display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--muted);
+    white-space:nowrap;cursor:pointer;user-select:none;
+  }
+  .cmp-filter-check input{accent-color:var(--danger);width:15px;height:15px;cursor:pointer}
+  .cmp-filter-clear{
+    background:var(--surface3);border:1px solid var(--border);color:var(--muted);border-radius:8px;
+    padding:9px 12px;font-family:var(--font-disp);font-weight:600;font-size:.76rem;cursor:pointer;white-space:nowrap;
+  }
+  .cmp-filter-clear:hover{color:var(--text);border-color:var(--muted2)}
+  .cmp-filter-empty{padding:24px 20px;text-align:center;color:var(--muted);font-size:.83rem}
+
+  /* Toast + modal (shared) */
+  #toast{
+    position:fixed;bottom:22px;right:22px;background:var(--surface2);border:1px solid var(--border);
+    border-radius:10px;padding:13px 20px;font-size:.85rem;max-width:320px;opacity:0;
+    transform:translateY(10px);transition:.25s;pointer-events:none;z-index:999;
+  }
+  #toast.show{opacity:1;transform:translateY(0)}
+  #toast.success{border-color:var(--success);color:var(--success)}
+  #toast.error{border-color:var(--danger);color:var(--danger)}
+  #toast.info{border-color:var(--cyan);color:var(--cyan)}
+
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;
+    justify-content:center;z-index:500;opacity:0;pointer-events:none;transition:.2s;
+  }
+  .modal-overlay.open{opacity:1;pointer-events:all}
+  .modal{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px;
+    width:90%;max-width:360px;transform:scale(.95);transition:.2s;
+  }
+  .modal-overlay.open .modal{transform:scale(1)}
+  .modal h3{font-family:var(--font-disp);font-size:1.05rem;margin-bottom:10px}
+  .modal p{color:var(--muted);font-size:.83rem;margin-bottom:20px;line-height:1.55}
+  .modal-btns{display:flex;gap:10px;justify-content:flex-end}
+  .btn-cancel{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 16px;font-family:var(--font-disp);font-weight:600;cursor:pointer}
+  .btn-confirm{background:var(--danger);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-family:var(--font-disp);font-weight:700;cursor:pointer}
+
+  .scan-flash{animation:flash .4s ease}
+  @keyframes flash{0%{background:rgba(245,166,35,.28)}100%{background:transparent}}
+  .scan-flash.cyan{animation:flashc .4s ease}
+  @keyframes flashc{0%{background:rgba(45,212,200,.22)}100%{background:transparent}}
+
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-track{background:var(--surface)}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.14</span></h1>
+      <span id="hdrSub">Control Panel</span>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <span id="folderStatus" style="font-size:.72rem;color:var(--muted)">📁 Checking storage…</span>
+    <button class="btn-back" id="btnFolder" onclick="pickFolder()">📁 Connect Folder</button>
+    <button class="btn-back" id="btnBack" style="display:none" onclick="goHome()">← Home</button>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- ══════════════ MAIN / KIOSK ══════════════ -->
+  <div class="view active" id="viewMain">
+    <div class="kiosk">
+      <div class="kiosk-card">
+        <div class="barcode accent"></div>
+        <div class="kiosk-hero">
+          <h2>What do you want to do?</h2>
+          <p>Select the flow and event to start scanning.</p>
+        </div>
+        <div id="folderCallout" style="margin:0 30px 0;padding:12px 14px;border:1px dashed var(--border);border-radius:10px;font-size:.8rem;color:var(--muted);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <span id="folderCalloutText">📁 Checking storage…</span>
+          <button class="btn-back" id="btnFolderKiosk" onclick="pickFolder()" style="padding:7px 12px;font-size:.75rem">Connect Folder</button>
+        </div>
+        <div class="kiosk-body">
+
+          <div class="field-block">
+            <label>Flow</label>
+            <div class="segmented" id="modeSegment">
+              <button class="active" id="segOut" onclick="setKioskMode('outbound')">📦 Outbound</button>
+              <button id="segIn" onclick="setKioskMode('inbound')">🔄 Inbound</button>
+              <button id="segCmp" onclick="setKioskMode('compare')">🔀 Compare Excel</button>
+            </div>
+          </div>
+
+          <div class="field-block" id="eventFieldBlock">
+            <label>Event</label>
+            <div class="radio-row">
+              <label class="radio-opt selected" id="optNew">
+                <input type="radio" name="choice" value="new" checked onchange="setChoice('new')" />
+                New Event
+              </label>
+              <label class="radio-opt" id="optExisting">
+                <input type="radio" name="choice" value="existing" onchange="setChoice('existing')" />
+                Existing Event
+              </label>
+            </div>
+          </div>
+
+          <div class="field-block" id="existingWrap" style="display:none">
+            <label>Saved Events</label>
+            <div class="events-panel" id="eventsPanel"></div>
+          </div>
+
+          <button class="btn-start" id="btnStart" onclick="startFlow()">Start →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ OUTBOUND ══════════════ -->
+  <div class="view" id="viewOutbound">
+    <div class="work-topbar">
+      <div class="field">
+        <label>📍 Store #</label>
+        <input type="text" id="obStore" placeholder="e.g. 776" />
+      </div>
+      <div class="field">
+        <label>🏪 Event Name</label>
+        <input type="text" id="obEventName" placeholder="e.g. Summer Sale Event" />
+      </div>
+      <div class="field">
+        <label>📅 Date</label>
+        <input type="date" id="obDate" />
+      </div>
+      <div class="field" style="max-width:220px">
+        <label>Switch Event</label>
+        <select id="obEventSwitch" onchange="switchOutboundEvent(this.value)">
+          <option value="">— New event —</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Outbound Scan</span>
+          <span class="panel-count" id="obCount">0 items</span>
+        </div>
+        <div class="scan-zone">
+          <input type="text" id="obScanInput" placeholder="Scan or type UPC and press Enter…" autocomplete="off" inputmode="numeric" />
+          <button class="btn-cam" onclick="openCameraScan('out')" title="Scan with camera">📷</button>
+          <button class="btn-add" onclick="addUpcManual('out')">+ Add</button>
+        </div>
+        <div class="list-wrap">
+          <div class="empty" id="obEmpty"><span class="ic">📭</span>Connect the scanner and start scanning.</div>
+          <table id="obTable" style="display:none">
+            <thead><tr><th class="col-num">#</th><th>UPC</th><th class="col-del">Del</th></tr></thead>
+            <tbody id="obTbody"></tbody>
+          </table>
+        </div>
+        <div class="save-bar">
+          <button class="btn-save" onclick="saveOutboundEvent()">💾 Save Event</button>
+          <button class="btn-ghost" onclick="exportOutboundExcel()">⇩ Export Excel</button>
+        </div>
+        <div class="inline-note">⚡ The USB scanner types into the scan field; each read is added to the list automatically.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Summary by UPC</span>
+        </div>
+        <div id="obSummaryEmpty" class="empty" style="padding:30px 20px"><span class="ic">📊</span>The summary will appear here.</div>
+        <table id="obSummaryTable" style="display:none">
+          <thead><tr><th>UPC</th><th>Cant.</th></tr></thead>
+          <tbody id="obSummaryBody"></tbody>
+        </table>
+        <div class="summary-total" id="obTotalRow" style="display:none">
+          <span class="total-label">Total UPCs</span>
+          <span class="total-val" id="obTotal">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ INBOUND ══════════════ -->
+  <div class="view" id="viewInbound">
+    <div class="panel" style="margin-bottom:18px">
+      <div class="filter-bar">
+        <input type="text" id="ibStoreFilter" placeholder="Filter by Store # (e.g. 776)" inputmode="numeric" />
+        <button onclick="filterInboundEvents()">🔍 Search</button>
+      </div>
+      <div class="event-select-list" id="ibEventList">
+        <div class="empty" style="padding:16px"><span class="ic">🏬</span>Enter a Store # to see its Outbound events.</div>
+      </div>
+    </div>
+
+    <div id="ibWorkArea" style="display:none">
+      <div class="work-topbar">
+        <div class="field"><label>📍 Store #</label><input type="text" id="ibStore" readonly /></div>
+        <div class="field"><label>🏪 Event</label><input type="text" id="ibEventName" readonly /></div>
+        <div class="field"><label>📅 Date</label><input type="text" id="ibDate" readonly /></div>
+      </div>
+
+      <div class="main-grid">
+        <div style="display:flex;flex-direction:column;gap:18px">
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Scanned UPC List</span>
+              <span class="panel-count" id="ibListCount">0 items</span>
+            </div>
+            <div class="scan-zone cyan">
+              <input type="text" id="ibScanInput" placeholder="Scan returning UPC…" autocomplete="off" inputmode="numeric" />
+              <button class="btn-cam" onclick="openCameraScan('in')" title="Scan with camera">📷</button>
+              <button class="btn-add" onclick="addUpcManual('in')">+ Add</button>
+            </div>
+            <div class="list-wrap">
+              <div class="empty" id="ibEmpty"><span class="ic">📭</span>Scan the merchandise that returned from the event.</div>
+              <table id="ibTable" style="display:none">
+                <thead><tr><th class="col-num">#</th><th>UPC</th><th class="col-del">Del</th></tr></thead>
+                <tbody id="ibTbody"></tbody>
+              </table>
+            </div>
+            <div class="sold-block">
+              <div class="combo-wrap">
+                <input type="text" id="soldUpcSearch" class="combo-input" placeholder="Search or select UPC…" autocomplete="off" inputmode="numeric" />
+                <div class="combo-dropdown" id="soldUpcDropdown"></div>
+              </div>
+              <input type="number" id="soldQtyInput" placeholder="Qty sold" min="1" />
+              <button onclick="addSoldManual()">✓ Register Sale</button>
+            </div>
+            <div class="panel-header" style="border-top:1px solid var(--border)">
+              <span class="panel-title" style="color:var(--accent)">Registered Sales</span>
+              <span class="panel-count" id="soldCount">0 UPCs</span>
+            </div>
+            <div class="list-wrap" style="max-height:220px">
+              <div class="empty" id="soldEmpty" style="padding:24px 18px"><span class="ic">🧾</span>No sales registered yet.</div>
+              <table id="soldTable" style="display:none">
+                <thead><tr><th>UPC</th><th>Qty Sold</th><th style="width:110px">Actions</th></tr></thead>
+                <tbody id="soldTbody"></tbody>
+              </table>
+            </div>
+            <div class="inline-note">⚡ Only UPCs that went out in this event's Outbound are accepted. If you scan one that doesn't belong to the event, an error will show and it won't be added.</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Outbound / Inbound Comparison</span>
+              <span class="panel-count" id="ibCount">0 sold</span>
+            </div>
+            <div class="cmp-filter-bar">
+              <input type="text" id="ibCompareFilter" placeholder="🔍 Filter by UPC (full or partial)…" autocomplete="off" inputmode="numeric" oninput="renderCompareTable()" />
+              <label class="cmp-filter-check"><input type="checkbox" id="ibNegOnlyFilter" onchange="renderCompareTable()" /> Only negative Difference</label>
+              <button class="cmp-filter-clear" onclick="clearIbCompareFilters()">Clear filters</button>
+            </div>
+            <div class="list-wrap" style="max-height:340px">
+              <table id="ibCompareTable">
+                <thead><tr>
+                  <th>UPC</th><th>Outbound</th><th>Inbound</th><th>Sold</th><th>Difference</th>
+                </tr></thead>
+                <tbody id="ibCompareTbody"></tbody>
+              </table>
+            </div>
+            <div class="summary-total">
+              <span class="total-label">Totals — Outbound / Inbound / Sold / Difference</span>
+              <span class="total-val" id="ibTotals">0 / 0 / 0 / 0</span>
+            </div>
+            <div class="error-count-row" id="ibErrorRow" style="display:none"></div>
+            <div class="save-bar">
+              <button class="btn-save" onclick="saveInboundEvent()">💾 Save Inbound</button>
+              <button class="btn-ghost" onclick="exportInboundExcel()">⇩ Export Excel</button>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">Event Chart</span></div>
+          <div class="chart-wrap"><canvas id="ibChart" height="220"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ COMPARE EXCEL DATA ══════════════ -->
+  <div class="view" id="viewCompare">
+    <div class="panel" style="margin-bottom:18px">
+      <div class="panel-header">
+        <span class="panel-title">Paste UPC Lists from Excel</span>
+      </div>
+      <div class="cmp-paste-grid">
+        <div class="cmp-paste-field">
+          <label>Outbound</label>
+          <textarea id="cmpOutboundText" class="cmp-textarea" placeholder="Paste Outbound UPCs here, one per line…"></textarea>
+        </div>
+        <div class="cmp-paste-field">
+          <label>Inbound</label>
+          <textarea id="cmpInboundText" class="cmp-textarea" placeholder="Paste Inbound UPCs here, one per line…"></textarea>
+        </div>
+      </div>
+      <div class="cmp-actions">
+        <button class="btn-cmp" onclick="runCompare()">🔀 Compare</button>
+        <button class="btn-ghost" onclick="loadCompareSample()">📥 Load sample data</button>
+        <button class="btn-ghost" onclick="clearCompare()">Clear</button>
+      </div>
+      <div class="inline-note">⚡ Paste the full list copied from Excel, one UPC per line, keeping duplicates — each repeated line counts as one more unit of that UPC.</div>
+    </div>
+
+    <div class="main-grid">
+      <div style="display:flex;flex-direction:column;gap:18px">
+
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Register Sales</span>
+          </div>
+          <div class="sold-block">
+            <div class="combo-wrap">
+              <input type="text" id="cmpSoldUpcSearch" class="combo-input cmp-input" placeholder="Search or select UPC…" autocomplete="off" inputmode="numeric" />
+              <div class="combo-dropdown" id="cmpSoldUpcDropdown"></div>
+            </div>
+            <input type="number" id="cmpSoldQtyInput" placeholder="Qty sold" min="1" />
+            <button onclick="addCmpSoldManual()">✓ Register Sale</button>
+          </div>
+          <div class="panel-header" style="border-top:1px solid var(--border)">
+            <span class="panel-title" style="color:var(--purple)">Registered Sales</span>
+            <span class="panel-count" id="cmpSoldCount">0 UPCs</span>
+          </div>
+          <div class="list-wrap" style="max-height:260px">
+            <div class="empty" id="cmpSoldEmpty" style="padding:24px 18px"><span class="ic">🧾</span>No sales registered yet.</div>
+            <table id="cmpSoldTable" style="display:none">
+              <thead><tr><th>UPC</th><th>Qty Sold</th><th style="width:110px">Actions</th></tr></thead>
+              <tbody id="cmpSoldTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Outbound / Inbound Comparison</span>
+            <span class="panel-count" id="cmpCount">0 sold</span>
+          </div>
+          <div class="cmp-filter-bar">
+            <input type="text" id="cmpCompareFilter" placeholder="🔍 Filter by UPC (full or partial)…" autocomplete="off" inputmode="numeric" oninput="renderCmpCompareTable()" />
+            <label class="cmp-filter-check"><input type="checkbox" id="cmpNegOnlyFilter" onchange="renderCmpCompareTable()" /> Only negative Difference</label>
+            <label class="cmp-filter-check"><input type="checkbox" id="cmpErrorOnlyFilter" onchange="renderCmpCompareTable()" /> Only Error</label>
+            <button class="cmp-filter-clear" onclick="clearCmpCompareFilters()">Clear filters</button>
+          </div>
+          <div class="list-wrap" style="max-height:340px">
+            <table id="cmpCompareTable">
+              <thead><tr>
+                <th>UPC</th><th>Outbound</th><th>Inbound</th><th>Sold</th><th>Difference</th>
+              </tr></thead>
+              <tbody id="cmpCompareTbody"></tbody>
+            </table>
+          </div>
+          <div class="summary-total">
+            <span class="total-label">Totals — Outbound / Inbound / Sold / Difference</span>
+            <span class="total-val" id="cmpTotals">0 / 0 / 0 / 0</span>
+          </div>
+          <div class="error-count-row" id="cmpErrorRow" style="display:none"></div>
+        </div>
+
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Event Chart</span></div>
+        <div class="chart-wrap"><canvas id="cmpChart" height="220"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer style="max-width:1360px;margin:20px auto 0;padding:16px 20px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-top:1px solid var(--border);color:var(--muted);font-size:.75rem;">
+  <span>© 2026 · <b>MSD3sign</b> — Portfolio Project · by Miguel Salazar</span>
+  <span style="display:inline-flex;align-items:center;gap:12px;">
+    <a href="https://github.com/MSD3sign/outside-event-dashboard" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:none;">GitHub</a>
+    <a href="https://www.linkedin.com/in/miguel-salazar-416703243" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:none;">LinkedIn</a>
+  </span>
+</footer>
+
+<div class="cam-overlay" id="camOverlay">
+  <div class="cam-modal">
+    <div class="cam-header">
+      <span class="cam-title">📷 Scan with camera</span>
+      <button class="cam-close" onclick="closeCameraScan()">✕</button>
+    </div>
+    <div class="cam-video-wrap">
+      <video id="camVideo" playsinline muted autoplay></video>
+      <div class="cam-reticle"></div>
+    </div>
+    <div class="cam-status" id="camStatus">Point the camera at a barcode…</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <h3>⚠️ Confirm Deletion</h3>
+    <p id="deleteModalMsg">Are you sure you want to delete this UPC from the list?<br/>This action cannot be undone.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-confirm" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════════ */
+let kioskMode = 'outbound';
+let kioskChoice = 'new';
+let selectedEventId = null;
+
+let eventsIndex = [];          // [{id, store, eventName, date}]
+let currentEvent = null;       // full event object being worked on
+
+let pendingDelete = null;      // {which:'out'|'in', idx}
+
+/* ══════════════════════════════════════════════════════
+   STORAGE — 3 niveles, de mejor a peor:
+   1) CARPETA LOCAL (File System Access API, Chrome/Edge): cada evento
+      es un archivo .json real dentro de una carpeta que tú eliges.
+      Si otro navegador/computadora conecta la MISMA carpeta (o una
+      carpeta sincronizada por OneDrive/Drive/Dropbox/red), ve todos
+      los eventos, porque el listado se arma leyendo los archivos.
+   2) window.storage: solo existe dentro de Claude.ai (vista artifact).
+   3) localStorage: respaldo cuando el archivo se abre suelto (file://)
+      en un navegador sin soporte para carpetas. Solo vive en ese navegador.
+   ══════════════════════════════════════════════════════ */
+const STORAGE_PREFIX = 'outsideEvent:';
+const hasPlatformStorage = (typeof window !== 'undefined') && !!window.storage && typeof window.storage.get === 'function';
+const supportsFolderFS = typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function';
+
+let dirHandle = null;        // FileSystemDirectoryHandle activo
+let pendingDirHandle = null; // handle recordado pero sin permiso confirmado aún
+let storageMode = 'browser'; // 'folder' | 'browser'
+
+/* --- IndexedDB: recordar el handle de la carpeta entre sesiones --- */
+function idbOpen(){
+  return new Promise((resolve,reject)=>{
+    const req = indexedDB.open('outsideEventFS', 1);
+    req.onupgradeneeded = ()=> req.result.createObjectStore('handles');
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+async function idbSaveHandle(handle){
+  try{
+    const db = await idbOpen();
+    const tx = db.transaction('handles','readwrite');
+    tx.objectStore('handles').put(handle, 'folder');
+    await new Promise(res=>{ tx.oncomplete=res; tx.onerror=res; });
+  }catch(e){ /* silencioso: si falla, simplemente no se recuerda entre sesiones */ }
+}
+async function idbLoadHandle(){
+  try{
+    const db = await idbOpen();
+    const tx = db.transaction('handles','readonly');
+    const req = tx.objectStore('handles').get('folder');
+    return await new Promise(res=>{ req.onsuccess=()=>res(req.result||null); req.onerror=()=>res(null); });
+  }catch(e){ return null; }
+}
+
+/* --- Conectar / reconectar carpeta (requiere clic del usuario) --- */
+async function pickFolder(){
+  if(!supportsFolderFS){
+    showToast('Your browser does not support saving to folders. Use Chrome or Edge for this feature.', 'error');
+    return;
+  }
+  try{
+    const handle = await window.showDirectoryPicker({ mode:'readwrite' });
+    dirHandle = handle; pendingDirHandle = null; storageMode = 'folder';
+    await idbSaveHandle(handle);
+    updateFolderUI();
+    await loadEventsIndex();
+    renderEventsPanel();
+    showToast('📁 Folder connected: ' + handle.name, 'success');
+  }catch(e){ /* el usuario canceló el diálogo: no hacer nada */ }
+}
+async function reconnectFolder(){
+  if(!pendingDirHandle) return pickFolder();
+  try{
+    const perm = await pendingDirHandle.requestPermission({ mode:'readwrite' });
+    if(perm === 'granted'){
+      dirHandle = pendingDirHandle; storageMode = 'folder'; pendingDirHandle = null;
+      updateFolderUI();
+      await loadEventsIndex();
+      renderEventsPanel();
+      showToast('📁 Folder reconnected: ' + dirHandle.name, 'success');
+    } else {
+      showToast('Permission denied for the folder.', 'error');
+    }
+  }catch(e){ showToast('Could not reconnect the folder.', 'error'); }
+}
+function updateFolderUI(){
+  const texts = [];
+  let btnLabel = 'Connect Folder', btnFn = pickFolder;
+  if(!supportsFolderFS){
+    texts.push('📁 Browser has no folder support — using local browser storage');
+    btnLabel = null;
+  } else if(storageMode === 'folder' && dirHandle){
+    texts.push('📁 Folder connected: ' + dirHandle.name);
+    btnLabel = 'Change'; btnFn = pickFolder;
+  } else if(pendingDirHandle){
+    texts.push('📁 Folder remembered — permission needs confirming');
+    btnLabel = 'Reconnect Folder'; btnFn = reconnectFolder;
+  } else {
+    texts.push('📁 Saving only in this browser (not shared)');
+    btnLabel = 'Connect Folder'; btnFn = pickFolder;
+  }
+  const statusText = texts[0];
+  ['folderStatus','folderCalloutText'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.textContent = statusText;
+  });
+  [['btnFolder',null],['btnFolderKiosk',null]].forEach(([id])=>{
+    const el = document.getElementById(id); if(!el) return;
+    if(btnLabel){ el.style.display=''; el.textContent = btnLabel; el.onclick = btnFn; }
+    else { el.style.display = 'none'; }
+  });
+}
+
+/* --- Leer todos los eventos escaneando los .json de la carpeta --- */
+async function scanFolderEvents(){
+  const list = [];
+  try{
+    for await (const [name, handle] of dirHandle.entries()){
+      if(handle.kind === 'file' && name.toLowerCase().endsWith('.json')){
+        try{
+          const file = await handle.getFile();
+          const ev = JSON.parse(await file.text());
+          if(ev && ev.id) list.push({ id:ev.id, store:ev.store, eventName:ev.eventName, date:ev.date, __filename:name });
+        }catch(e){ /* archivo corrupto o no es un evento válido: se ignora */ }
+      }
+    }
+  }catch(e){ showToast('Could not read the selected folder.', 'error'); }
+  return list;
+}
+function filenameForEvent(ev){
+  const slug = s => (String(s||'').trim().replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim()) || 'sin-nombre';
+  const base = slug(ev.store) + ' - ' + slug(ev.eventName || 'Evento');
+  const collides = (name) => eventsIndex.some(e => e.id !== ev.id && e.__filename === name + '.json');
+  let candidate = base, n = 2;
+  while(collides(candidate)){
+    candidate = base + ' (' + slug(ev.date || '') + (n > 2 ? ' ' + n : '') + ')';
+    n++;
+  }
+  return candidate + '.json';
+}
+
+async function loadEventsIndex(){
+  if(storageMode === 'folder' && dirHandle){
+    eventsIndex = await scanFolderEvents();
+    return eventsIndex;
+  }
+  try{
+    const r = await storageGet('events-index');
+    eventsIndex = r ? JSON.parse(r.value) : [];
+  }catch(e){ eventsIndex = []; }
+  return eventsIndex;
+}
+async function saveEventsIndex(){
+  if(storageMode === 'folder') return; // en modo carpeta el índice se deriva leyendo el disco
+  try{ await storageSet('events-index', JSON.stringify(eventsIndex)); }
+  catch(e){ showToast('Could not save the events index.', 'error'); }
+}
+async function loadEventById(id){
+  if(storageMode === 'folder' && dirHandle){
+    let entry = eventsIndex.find(e=>e.id===id);
+    if(!entry){ await loadEventsIndex(); entry = eventsIndex.find(e=>e.id===id); }
+    if(!entry) return null;
+    try{
+      const fh = await dirHandle.getFileHandle(entry.__filename);
+      const file = await fh.getFile();
+      const ev = JSON.parse(await file.text());
+      ev.__filename = entry.__filename;
+      return ev;
+    }catch(e){ return null; }
+  }
+  try{
+    const r = await storageGet('event:'+id);
+    return r ? JSON.parse(r.value) : null;
+  }catch(e){ return null; }
+}
+async function persistEvent(ev){
+  if(storageMode === 'folder' && dirHandle){
+    try{
+      const oldFilename = ev.__filename;
+      delete ev.__filename;
+      const newFilename = filenameForEvent(ev);
+      const fh = await dirHandle.getFileHandle(newFilename, { create:true });
+      const writable = await fh.createWritable();
+      await writable.write(JSON.stringify(ev, null, 2));
+      await writable.close();
+      if(oldFilename && oldFilename !== newFilename){
+        try{ await dirHandle.removeEntry(oldFilename); }catch(e){ /* no crítico */ }
+      }
+      ev.__filename = newFilename;
+      await loadEventsIndex(); // refrescar índice leyendo la carpeta de nuevo
+      return true;
+    }catch(e){ showToast('Error saving the file to the folder.', 'error'); return false; }
+  }
+  try{
+    await storageSet('event:'+ev.id, JSON.stringify(ev));
+    return true;
+  }catch(e){ showToast('Error saving the event.', 'error'); return false; }
+}
+
+async function storageGet(key){
+  if(hasPlatformStorage){
+    try{ return await window.storage.get(key, false); }
+    catch(e){ return null; }
+  }
+  try{
+    const raw = localStorage.getItem(STORAGE_PREFIX+key);
+    return raw !== null ? {key, value: raw, shared:false} : null;
+  }catch(e){ return null; }
+}
+async function storageSet(key, value){
+  if(hasPlatformStorage){
+    return await window.storage.set(key, value, false);
+  }
+  localStorage.setItem(STORAGE_PREFIX+key, value);
+  return {key, value, shared:false};
+}
+
+function makeEventId(store, date){ return (store+'_'+date).replace(/[^\w-]/g,'') + '_' + Math.random().toString(36).slice(2,8); }
+function blankEvent(store, eventName, date){
+  return {
+    id: makeEventId(store, date),
+    store, eventName, date,
+    outboundList: [], soldManual: {}, inboundList: [],
+    createdAt: Date.now(), updatedAt: Date.now()
+  };
+}
+
+/* ══════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════ */
+(async function init(){
+  if(supportsFolderFS){
+    try{
+      const handle = await idbLoadHandle();
+      if(handle){
+        const perm = await handle.queryPermission({ mode:'readwrite' });
+        if(perm === 'granted'){ dirHandle = handle; storageMode = 'folder'; }
+        else { pendingDirHandle = handle; storageMode = 'browser'; }
+      }
+    }catch(e){ /* sin carpeta recordada o error leyendo IndexedDB */ }
+  }
+  updateFolderUI();
+  await loadEventsIndex();
+  renderEventsPanel();
+})();
+
+/* ══════════════════════════════════════════════════════
+   MAIN / KIOSK
+   ══════════════════════════════════════════════════════ */
+function setKioskMode(m){
+  kioskMode = m;
+  document.getElementById('segOut').classList.toggle('active', m==='outbound');
+  document.getElementById('segIn').classList.toggle('active', m==='inbound');
+  document.getElementById('segIn').classList.toggle('inbound-active', m==='inbound');
+  document.getElementById('segCmp').classList.toggle('active', m==='compare');
+  document.getElementById('segCmp').classList.toggle('cmp-active', m==='compare');
+  document.getElementById('eventFieldBlock').style.display = (m==='compare') ? 'none' : '';
+  if(m==='compare') document.getElementById('existingWrap').style.display = 'none';
+  else if(kioskChoice==='existing') document.getElementById('existingWrap').style.display = '';
+}
+function setChoice(c){
+  kioskChoice = c;
+  document.getElementById('optNew').classList.toggle('selected', c==='new');
+  document.getElementById('optExisting').classList.toggle('selected', c==='existing');
+  document.getElementById('existingWrap').style.display = c==='existing' ? '' : 'none';
+  if(c==='existing') renderEventsPanel();
+  selectedEventId = null;
+}
+function renderEventsPanel(){
+  const panel = document.getElementById('eventsPanel');
+  if(!eventsIndex.length){
+    panel.innerHTML = '<div class="events-empty">No saved events yet.</div>';
+    return;
+  }
+  const sorted = [...eventsIndex].sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  panel.innerHTML = sorted.map(ev => `
+    <div class="event-item" data-id="${ev.id}" onclick="pickEvent('${ev.id}', this)">
+      <div>
+        <div class="ei-name">${escHtml(ev.eventName || ('Store '+ev.store))}</div>
+        <div class="ei-meta">Store ${escHtml(ev.store)} · ${escHtml(formatDisplayDate(ev.date))}</div>
+      </div>
+      <span style="color:var(--muted);font-size:.75rem">Store ${escHtml(ev.store)}</span>
+    </div>
+  `).join('') + `
+    <div class="event-item new-entry" onclick="pickNewFromList()">＋ New Event</div>
+  `;
+}
+function pickEvent(id, el){
+  selectedEventId = id;
+  document.querySelectorAll('.event-item').forEach(i=>i.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function pickNewFromList(){
+  selectedEventId = null;
+  kioskChoice = 'new';
+  document.querySelectorAll('.event-item').forEach(i=>i.classList.remove('selected'));
+}
+
+async function startFlow(){
+  if(kioskMode==='compare'){ openCompareView(); return; }
+
+  if(kioskChoice==='existing' && selectedEventId){
+    currentEvent = await loadEventById(selectedEventId);
+    if(!currentEvent){ showToast('Could not load the event.', 'error'); return; }
+  } else {
+    currentEvent = null; // new event flow
+  }
+
+  if(kioskChoice==='new' || !selectedEventId){
+    // New events always start in Outbound, per spec
+    openOutbound(currentEvent);
+  } else if(kioskMode==='outbound'){
+    openOutbound(currentEvent);
+  } else {
+    openInboundWithEvent(currentEvent);
+  }
+}
+
+function goHome(){
+  closeCameraScan();
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('viewMain').classList.add('active');
+  document.getElementById('btnBack').style.display = 'none';
+  document.getElementById('hdrSub').textContent = 'Control Panel';
+  loadEventsIndex().then(renderEventsPanel);
+}
+function switchView(id, subtitle){
+  closeCameraScan();
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('btnBack').style.display = '';
+  document.getElementById('hdrSub').textContent = subtitle;
+}
+
+/* ══════════════════════════════════════════════════════
+   OUTBOUND
+   ══════════════════════════════════════════════════════ */
+function openOutbound(ev){
+  switchView('viewOutbound', '📦 Outbound');
+  populateOutboundEventSwitch();
+  if(ev){
+    outboundEditingId = ev.id;
+    document.getElementById('obEventSwitch').value = ev.id;
+    loadOutboundFields(ev);
+  } else {
+    outboundEditingId = null;
+    currentEvent = null;
+    document.getElementById('obEventSwitch').value = '';
+    document.getElementById('obStore').value = '';
+    document.getElementById('obEventName').value = '';
+    document.getElementById('obDate').value = new Date().toISOString().split('T')[0];
+    outboundWorkingList = [];
+    renderOutboundList(); renderOutboundSummary();
+  }
+  setTimeout(()=>document.getElementById('obScanInput').focus(), 80);
+}
+function populateOutboundEventSwitch(){
+  const sel = document.getElementById('obEventSwitch');
+  const sorted = [...eventsIndex].sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  sel.innerHTML = '<option value="">— New event —</option>' +
+    sorted.map(e=>`<option value="${e.id}">${escHtml(e.eventName||('Store '+e.store))} · ${escHtml(formatDisplayDate(e.date))}</option>`).join('');
+}
+async function switchOutboundEvent(id){
+  if(!id){ openOutbound(null); return; }
+  const ev = await loadEventById(id);
+  if(ev){ currentEvent = ev; outboundEditingId = id; loadOutboundFields(ev); }
+}
+let outboundWorkingList = [];
+let outboundEditingId = null; // id del evento que se está editando/continuando; null = evento nuevo
+function loadOutboundFields(ev){
+  document.getElementById('obStore').value = ev.store;
+  document.getElementById('obEventName').value = ev.eventName || '';
+  document.getElementById('obDate').value = ev.date;
+  outboundWorkingList = [...(ev.outboundList||[])];
+  renderOutboundList(); renderOutboundSummary();
+}
+function makeUniqueEventId(store, date){
+  const base = makeEventId(store, date);
+  if(!eventsIndex.some(e=>e.id===base)) return base;
+  let n = 2, candidate = base+'-'+n;
+  while(eventsIndex.some(e=>e.id===candidate)){ n++; candidate = base+'-'+n; }
+  return candidate;
+}
+
+const obScanInput = document.getElementById('obScanInput');
+
+/* Auto-commit por temporización: si el escáner no envía "Enter", el
+   campo se confirma y limpia solo tras una pequeña pausa, evitando que
+   el siguiente código se pegue al anterior. Enter confirma al instante. */
+const SCAN_IDLE_MS = 300;
+let obScanTimer = null, ibScanTimer = null;
+
+function commitScan(which){
+  const inp = which==='out' ? obScanInput : document.getElementById('ibScanInput');
+  const val = inp.value.trim();
+  inp.value = ''; // limpiar SIEMPRE primero
+  if(!val) return;
+  if(which==='out'){
+    outboundWorkingList.push(val);
+    renderOutboundList(); renderOutboundSummary(); flash('obTbody');
+  } else {
+    addInboundUpc(val);
+  }
+}
+
+obScanInput.addEventListener('input', ()=>{
+  clearTimeout(obScanTimer);
+  obScanTimer = setTimeout(()=>commitScan('out'), SCAN_IDLE_MS);
+});
+obScanInput.addEventListener('keydown', e=>{
+  if(e.key==='Enter'){ clearTimeout(obScanTimer); commitScan('out'); }
+});
+
+function addUpcManual(which){
+  if(which==='out'){ clearTimeout(obScanTimer); commitScan('out'); obScanInput.focus(); }
+  else { clearTimeout(ibScanTimer); commitScan('in'); document.getElementById('ibScanInput').focus(); }
+}
+function renderOutboundList(){
+  const tbody = document.getElementById('obTbody');
+  const empty = document.getElementById('obEmpty');
+  const table = document.getElementById('obTable');
+  document.getElementById('obCount').textContent = outboundWorkingList.length + ' items';
+  if(!outboundWorkingList.length){ empty.style.display=''; table.style.display='none'; return; }
+  empty.style.display='none'; table.style.display='';
+  tbody.innerHTML = outboundWorkingList.map((u,i)=>`
+    <tr><td class="col-num">${i+1}</td><td>${escHtml(u)}</td>
+    <td class="col-del"><button class="btn-del" onclick="askDelete('out',${i})">🗑</button></td></tr>
+  `).join('');
+  const wrap = table.closest('.list-wrap'); if(wrap) wrap.scrollTop = wrap.scrollHeight;
+}
+function renderOutboundSummary(){
+  const summary = buildSummary(outboundWorkingList);
+  const keys = Object.keys(summary);
+  const table = document.getElementById('obSummaryTable');
+  const empty = document.getElementById('obSummaryEmpty');
+  const totalRow = document.getElementById('obTotalRow');
+  if(!keys.length){ table.style.display='none'; empty.style.display=''; totalRow.style.display='none'; return; }
+  table.style.display=''; empty.style.display='none'; totalRow.style.display='';
+  document.getElementById('obSummaryBody').innerHTML = keys.map(u=>`
+    <tr><td>${escHtml(u)}</td><td><span class="qty-badge">${summary[u]}</span></td></tr>
+  `).join('');
+  document.getElementById('obTotal').textContent = outboundWorkingList.length;
+}
+async function saveOutboundEvent(){
+  const store = document.getElementById('obStore').value.trim();
+  const eventName = document.getElementById('obEventName').value.trim();
+  const date = document.getElementById('obDate').value;
+  if(!store){ showToast('Enter the Store #.', 'error'); return; }
+  if(!date){ showToast('Select the event date.', 'error'); return; }
+  if(!outboundWorkingList.length){ showToast('No UPCs scanned.', 'error'); return; }
+
+  let id, ev;
+  if(outboundEditingId){
+    id = outboundEditingId;
+    const existing = await loadEventById(id);
+    ev = existing || blankEvent(store, eventName, date);
+    ev.id = id;
+  } else {
+    id = makeUniqueEventId(store, date);
+    ev = blankEvent(store, eventName, date);
+    ev.id = id;
+  }
+  ev.store = store; ev.eventName = eventName; ev.date = date;
+  ev.outboundList = outboundWorkingList;
+  ev.updatedAt = Date.now();
+
+  const ok = await persistEvent(ev);
+  if(!ok) return;
+  currentEvent = ev;
+  outboundEditingId = id;
+
+  if(storageMode !== 'folder'){
+    if(!eventsIndex.find(e=>e.id===id)) eventsIndex.push({id, store, eventName, date});
+    else eventsIndex = eventsIndex.map(e=> e.id===id ? {id, store, eventName, date} : e);
+    await saveEventsIndex();
+  }
+  populateOutboundEventSwitch();
+  document.getElementById('obEventSwitch').value = id;
+  const where = storageMode === 'folder' ? ('folder ("' + ev.__filename + '")') : 'this browser';
+  showToast('✅ Event saved in ' + where + ' (' + outboundWorkingList.length + ' UPCs).', 'success');
+}
+function exportOutboundExcel(){
+  const store = document.getElementById('obStore').value.trim();
+  const date = document.getElementById('obDate').value;
+  if(!store || !date || !outboundWorkingList.length){ showToast('Fill in the fields and scan before exporting.', 'error'); return; }
+  const summary = buildSummary(outboundWorkingList);
+  const fmt = formatDisplayDate(date);
+  const rows = [['Loc #', store], ['Date', fmt], ['Enter Location & Event Start Date'], [], [], ['UPC','Quantity']];
+  Object.keys(summary).forEach(u=>rows.push([u, summary[u]]));
+  rows.push([]); rows.push(['TOTAL', outboundWorkingList.length]);
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:20},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws, ("Outbound UPCs "+store+" "+fmt).substring(0,31));
+  XLSX.writeFile(wb, 'OutsideEvent_Outbound_'+store+'_'+fmt.replace(/\//g,'-')+'.xlsx');
+  showToast('Excel exported.', 'success');
+}
+
+/* ══════════════════════════════════════════════════════
+   INBOUND
+   ══════════════════════════════════════════════════════ */
+let inboundOutboundSummary = {};  // {upc: outboundQty}
+let inboundScanSummary = {};      // {upc: inboundQty} (derived from inboundList)
+let inboundList = [];
+let soldManual = {};
+
+function openInboundWithEvent(ev){
+  switchView('viewInbound', '🔄 Inbound');
+  document.getElementById('ibStoreFilter').value = ev ? ev.store : '';
+  if(ev){ filterInboundEvents().then(()=> selectInboundEvent(ev.id)); }
+  else document.getElementById('ibWorkArea').style.display='none';
+}
+async function filterInboundEvents(){
+  const store = document.getElementById('ibStoreFilter').value.trim();
+  const listEl = document.getElementById('ibEventList');
+  if(!store){ listEl.innerHTML = '<div class="empty" style="padding:16px"><span class="ic">🏬</span>Enter a Store # to see its Outbound events.</div>'; return; }
+  await loadEventsIndex();
+  const matches = eventsIndex.filter(e => e.store === store);
+  if(!matches.length){
+    listEl.innerHTML = '<div class="empty" style="padding:16px"><span class="ic">🔎</span>No Outbound events for Store '+escHtml(store)+'.</div>';
+    return;
+  }
+  const sorted = matches.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  listEl.innerHTML = sorted.map(ev=>`
+    <div class="event-item" data-id="${ev.id}" onclick="selectInboundEvent('${ev.id}')">
+      <div><div class="ei-name">${escHtml(ev.eventName||('Store '+ev.store))}</div>
+      <div class="ei-meta">${escHtml(formatDisplayDate(ev.date))}</div></div>
+    </div>
+  `).join('');
+}
+async function selectInboundEvent(id){
+  const ev = await loadEventById(id);
+  if(!ev){ showToast('Could not load the event.', 'error'); return; }
+  currentEvent = ev;
+  document.querySelectorAll('#ibEventList .event-item').forEach(i=>i.classList.toggle('selected', i.dataset.id===id));
+
+  document.getElementById('ibStore').value = ev.store;
+  document.getElementById('ibEventName').value = ev.eventName || '';
+  document.getElementById('ibDate').value = formatDisplayDate(ev.date);
+
+  inboundOutboundSummary = buildSummary(ev.outboundList || []);
+  inboundList = [...(ev.inboundList || [])];
+  soldManual = { ...(ev.soldManual || {}) };
+  inboundScanSummary = buildSummary(inboundList);
+
+  populateSoldSelect();
+  document.getElementById('ibWorkArea').style.display = '';
+  renderInboundList();
+  editingSoldUpc = null;
+  renderSoldList();
+  clearIbCompareFilters();
+  setTimeout(()=>document.getElementById('ibScanInput').focus(), 80);
+}
+const ibScanInput = document.getElementById('ibScanInput');
+ibScanInput.addEventListener('input', ()=>{
+  clearTimeout(ibScanTimer);
+  ibScanTimer = setTimeout(()=>commitScan('in'), SCAN_IDLE_MS);
+});
+ibScanInput.addEventListener('keydown', e=>{
+  if(e.key==='Enter'){ clearTimeout(ibScanTimer); commitScan('in'); }
+});
+
+function addInboundUpc(upc){
+  if(!Object.prototype.hasOwnProperty.call(inboundOutboundSummary, upc)){
+    showToast('⚠️ This UPC is not registered in this event: ' + upc, 'error');
+    return;
+  }
+  if(remainingFor(upc) <= 0){
+    const out = inboundOutboundSummary[upc] || 0;
+    showToast('⚠️ All ' + out + ' unit(s) of ' + upc + ' that went out in Outbound have already been registered. You cannot scan more.', 'error');
+    return;
+  }
+  inboundList.push(upc);
+  inboundScanSummary = buildSummary(inboundList);
+  renderInboundList();
+  populateSoldSelect();
+  renderCompareTable();
+  flash('ibTbody', true);
+}
+function renderInboundList(){
+  const tbody = document.getElementById('ibTbody');
+  const empty = document.getElementById('ibEmpty');
+  const table = document.getElementById('ibTable');
+  document.getElementById('ibListCount').textContent = inboundList.length + ' items';
+  if(!inboundList.length){ empty.style.display=''; table.style.display='none'; return; }
+  empty.style.display='none'; table.style.display='';
+  tbody.innerHTML = inboundList.map((u,i)=>`
+    <tr><td class="col-num">${i+1}</td><td>${escHtml(u)}</td>
+    <td class="col-del"><button class="btn-del" onclick="askDelete('in',${i})">🗑</button></td></tr>
+  `).join('');
+  const wrap = table.closest('.list-wrap'); if(wrap) wrap.scrollTop = wrap.scrollHeight;
+}
+function remainingFor(upc){
+  const out = inboundOutboundSummary[upc] || 0;
+  const inn = inboundScanSummary[upc] || 0;
+  const sold = soldManual[upc] || 0;
+  return out - inn - sold;
+}
+/* ── Searchable UPC combobox: Inbound "Register Sales" ── */
+let soldAvailableUpcs = [];
+let selectedSoldUpc = null;
+
+function populateSoldSelect(){
+  soldAvailableUpcs = Object.keys(inboundOutboundSummary).filter(u => remainingFor(u) > 0);
+  if(selectedSoldUpc && !soldAvailableUpcs.includes(selectedSoldUpc)){
+    selectedSoldUpc = null;
+    const inp = document.getElementById('soldUpcSearch');
+    if(inp) inp.value = '';
+  }
+  renderSoldUpcDropdown();
+}
+function renderSoldUpcDropdown(){
+  const dd = document.getElementById('soldUpcDropdown');
+  if(!dd) return;
+  const q = (document.getElementById('soldUpcSearch').value || '').trim();
+  const matches = q ? soldAvailableUpcs.filter(u => u.includes(q)) : soldAvailableUpcs;
+  if(!matches.length){
+    dd.innerHTML = `<div class="combo-empty">${soldAvailableUpcs.length ? 'No UPCs match “'+escHtml(q)+'”' : 'No UPCs available to mark as sold'}</div>`;
+    return;
+  }
+  dd.innerHTML = matches.map(u=>`
+    <div class="combo-opt" data-upc="${escHtml(u)}">
+      <span>${escHtml(u)}</span><span class="co-avail">available: ${remainingFor(u)}</span>
+    </div>
+  `).join('');
+}
+function openSoldUpcDropdown(){ renderSoldUpcDropdown(); document.getElementById('soldUpcDropdown').classList.add('open'); }
+function closeSoldUpcDropdown(){ document.getElementById('soldUpcDropdown').classList.remove('open'); }
+function selectSoldUpc(upc){
+  selectedSoldUpc = upc;
+  document.getElementById('soldUpcSearch').value = upc;
+  closeSoldUpcDropdown();
+}
+(function initSoldCombo(){
+  const inp = document.getElementById('soldUpcSearch');
+  const dd = document.getElementById('soldUpcDropdown');
+  if(!inp || !dd) return;
+  inp.addEventListener('input', ()=>{
+    selectedSoldUpc = null;
+    openSoldUpcDropdown();
+  });
+  inp.addEventListener('focus', openSoldUpcDropdown);
+  inp.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){
+      e.preventDefault();
+      const val = inp.value.trim();
+      const exact = soldAvailableUpcs.find(u=>u===val);
+      if(exact) selectSoldUpc(exact);
+    } else if(e.key==='Escape'){ closeSoldUpcDropdown(); }
+  });
+  dd.addEventListener('click', e=>{
+    const opt = e.target.closest('.combo-opt');
+    if(opt && opt.dataset.upc !== undefined) selectSoldUpc(opt.dataset.upc);
+  });
+  document.addEventListener('click', e=>{
+    if(!e.target.closest('#soldUpcSearch') && !e.target.closest('#soldUpcDropdown')) closeSoldUpcDropdown();
+  });
+})();
+
+function addSoldManual(){
+  const upc = selectedSoldUpc || document.getElementById('soldUpcSearch').value.trim();
+  const qty = parseInt(document.getElementById('soldQtyInput').value, 10);
+  if(!upc || !soldAvailableUpcs.includes(upc)){ showToast('Select a valid UPC from the list.', 'error'); return; }
+  if(!qty || qty<=0){ showToast('Enter a valid quantity.', 'error'); return; }
+  const remaining = remainingFor(upc);
+  if(qty > remaining){
+    showToast('⚠️ Only '+remaining+' unit(s) available of '+upc+' left to mark as sold.', 'error');
+    return;
+  }
+  soldManual[upc] = (soldManual[upc] || 0) + qty;
+  document.getElementById('soldQtyInput').value = '';
+  document.getElementById('soldUpcSearch').value = '';
+  selectedSoldUpc = null;
+  populateSoldSelect();
+  renderSoldList();
+  renderCompareTable();
+  showToast('Sale registered: '+qty+' × '+upc, 'success');
+}
+
+/* ══ VENTAS REGISTRADAS: listado editable / eliminable ══ */
+let editingSoldUpc = null;
+function capForSold(upc){
+  // máximo total que se puede marcar como vendido para este UPC (sin contar lo ya vendido de él)
+  const out = inboundOutboundSummary[upc] || 0;
+  const inn = inboundScanSummary[upc] || 0;
+  return out - inn;
+}
+function renderSoldList(){
+  const entries = Object.entries(soldManual).filter(([,q]) => q > 0);
+  const tbody = document.getElementById('soldTbody');
+  const table = document.getElementById('soldTable');
+  const empty = document.getElementById('soldEmpty');
+  document.getElementById('soldCount').textContent = entries.length + ' UPCs';
+  if(!entries.length){ empty.style.display=''; table.style.display='none'; return; }
+  empty.style.display='none'; table.style.display='';
+  tbody.innerHTML = entries.map(([upc, qty])=>{
+    if(editingSoldUpc === upc){
+      return `<tr>
+        <td>${escHtml(upc)}</td>
+        <td><input type="number" min="0" class="edit-qty-input" id="editQtyInput" value="${qty}" /></td>
+        <td class="row-actions">
+          <button class="btn-mini-save" onclick="saveSoldEdit('${upc}')">✓</button>
+          <button class="btn-mini-cancel" onclick="cancelSoldEdit()">✕</button>
+        </td>
+      </tr>`;
+    }
+    return `<tr>
+      <td>${escHtml(upc)}</td>
+      <td><span class="qty-badge">${qty}</span></td>
+      <td class="row-actions">
+        <button class="btn-edit" onclick="startSoldEdit('${upc}')" title="Edit">✏️</button>
+        <button class="btn-del" onclick="askDeleteSold('${upc}')" title="Delete">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+function startSoldEdit(upc){ editingSoldUpc = upc; renderSoldList(); setTimeout(()=>{ const i=document.getElementById('editQtyInput'); if(i){ i.focus(); i.select(); } }, 30); }
+function cancelSoldEdit(){ editingSoldUpc = null; renderSoldList(); }
+function saveSoldEdit(upc){
+  const input = document.getElementById('editQtyInput');
+  const newQty = parseInt(input.value, 10);
+  if(isNaN(newQty) || newQty < 0){ showToast('Enter a valid quantity.', 'error'); return; }
+  if(newQty === 0){
+    delete soldManual[upc];
+  } else {
+    const cap = capForSold(upc);
+    if(newQty > cap){
+      showToast('⚠️ Maximum allowed for '+upc+': '+cap+' (Outbound − Inbound).', 'error');
+      return;
+    }
+    soldManual[upc] = newQty;
+  }
+  editingSoldUpc = null;
+  populateSoldSelect();
+  renderSoldList();
+  renderCompareTable();
+  showToast('Sale updated.', 'success');
+}
+function askDeleteSold(upc){
+  pendingDelete = {which:'sold', upc};
+  document.getElementById('deleteModalMsg').innerHTML =
+    `Are you sure you want to delete the registered sale of <strong>${escHtml(upc)}</strong> (${soldManual[upc]||0} unid.)?<br/>Esta acción no se puede deshacer.`;
+  document.getElementById('deleteModal').classList.add('open');
+}
+function renderCompareTable(){
+  const allUpcs = new Set([...Object.keys(inboundOutboundSummary), ...Object.keys(inboundScanSummary), ...Object.keys(soldManual)]);
+  const tbody = document.getElementById('ibCompareTbody');
+  let totOut=0, totIn=0, totSold=0, totDiff=0, errorCount=0;
+  const rowsData = [];
+  [...allUpcs].sort().forEach(upc=>{
+    const out = inboundOutboundSummary[upc] || 0;
+    const inn = inboundScanSummary[upc] || 0;
+    const sold = soldManual[upc] || 0;
+    const diff = (inn + sold) - out; // Difference = (Inbound + Sold) - Outbound
+    const isError = out === 0 && (inn > 0 || sold > 0); // inconsistent data: nothing went out but there's Inbound/Sold
+    totOut+=out; totIn+=inn; totSold+=sold; totDiff+=diff;
+    if(isError) errorCount++;
+    rowsData.push({upc,out,inn,sold,diff,isError});
+  });
+
+  // View filters (do not affect totals/chart — those always reflect the full event)
+  const filterEl = document.getElementById('ibCompareFilter');
+  const negOnlyEl = document.getElementById('ibNegOnlyFilter');
+  const filterText = filterEl ? filterEl.value.trim() : '';
+  const negOnly = negOnlyEl ? negOnlyEl.checked : false;
+  let displayRows = rowsData;
+  if(filterText) displayRows = displayRows.filter(r => r.upc.includes(filterText));
+  if(negOnly) displayRows = displayRows.filter(r => r.diff < 0);
+
+  if(!displayRows.length){
+    tbody.innerHTML = `<tr><td colspan="5"><div class="cmp-filter-empty">🔍 No UPCs match the current filter${negOnly ? ' (negative Difference only)' : ''}.</div></td></tr>`;
+  } else {
+    tbody.innerHTML = displayRows.map(r=>{
+      let diffClass, diffLabel;
+      if(r.isError){
+        diffClass = 'diff-neg';
+        diffLabel = 'Error (' + r.diff + ')';
+      } else {
+        diffClass = r.diff>0 ? 'diff-pos' : (r.diff<0 ? 'diff-neg' : 'diff-zero');
+        diffLabel = String(r.diff);
+      }
+      return `<tr>
+        <td>${escHtml(r.upc)}</td>
+        <td><span class="qty-badge">${r.out}</span></td>
+        <td><span class="qty-badge cyan">${r.inn}</span></td>
+        <td>${r.sold}</td>
+        <td class="${diffClass}">${diffLabel}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('ibCount').textContent = totSold + ' sold' + (displayRows.length !== rowsData.length ? ' · showing ' + displayRows.length + '/' + rowsData.length : '');
+  document.getElementById('ibTotals').textContent = `${totOut} / ${totIn} / ${totSold} / ${totDiff}`;
+  const ibErrorRow = document.getElementById('ibErrorRow');
+  if(errorCount > 0){
+    ibErrorRow.style.display = '';
+    ibErrorRow.textContent = '⚠️ Error (' + errorCount + ') UPCs that were not scanned in Outbound but were scanned in Inbound';
+  } else {
+    ibErrorRow.style.display = 'none';
+  }
+  drawChart(totOut, totIn, totSold, totDiff);
+}
+function clearIbCompareFilters(){
+  const f = document.getElementById('ibCompareFilter'); if(f) f.value = '';
+  const n = document.getElementById('ibNegOnlyFilter'); if(n) n.checked = false;
+  renderCompareTable();
+}
+let ibChartInstance = null;
+function drawChart(out,inn,sold,diff){
+  const ctx = document.getElementById('ibChart');
+  if(ibChartInstance) ibChartInstance.destroy();
+  ibChartInstance = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:['Outbound','Inbound','Sold','Difference'],
+      datasets:[{
+        data:[out,inn,sold,diff],
+        backgroundColor:['#f5a623','#2dd4c8','#33c17a', diff<0 ? '#e5484d' : '#828a9b'],
+        borderRadius:6
+      }]
+    },
+    options:{
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#828a9b'}, grid:{color:'#2c3241'}},
+        y:{ticks:{color:'#828a9b'}, grid:{color:'#2c3241'}, beginAtZero:true}
+      }
+    }
+  });
+}
+async function saveInboundEvent(){
+  if(!currentEvent){ showToast('Select an event first.', 'error'); return; }
+  currentEvent.inboundList = inboundList;
+  currentEvent.soldManual = soldManual;
+  currentEvent.updatedAt = Date.now();
+  const ok = await persistEvent(currentEvent);
+  if(ok) showToast('✅ Inbound saved.', 'success');
+}
+function exportInboundExcel(){
+  if(!currentEvent){ showToast('Select an event first.', 'error'); return; }
+  const allUpcs = new Set([...Object.keys(inboundOutboundSummary), ...Object.keys(inboundScanSummary), ...Object.keys(soldManual)]);
+  const rows = [['Loc #', currentEvent.store], ['Date', formatDisplayDate(currentEvent.date)], ['Inbound Return'], [], [],
+    ['UPC','Outbound','Inbound','Sold','Difference']];
+  let totOut=0,totIn=0,totSold=0,totDiff=0;
+  [...allUpcs].sort().forEach(upc=>{
+    const out = inboundOutboundSummary[upc]||0, inn = inboundScanSummary[upc]||0, sold = soldManual[upc]||0;
+    const diff = (inn + sold) - out; // Diferencia = (Inbound + Vendidos) - Outbound
+    const isError = out === 0 && (inn > 0 || sold > 0);
+    totOut+=out; totIn+=inn; totSold+=sold; totDiff+=diff;
+    rows.push([upc, out, inn, sold, isError ? ('ERROR ('+diff+')') : diff]);
+  });
+  rows.push([]); rows.push(['TOTAL', totOut, totIn, totSold, totDiff]);
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:20},{wch:12},{wch:12},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws, ('Inbound UPCs '+currentEvent.store+' '+formatDisplayDate(currentEvent.date)).substring(0,31));
+  XLSX.writeFile(wb, 'OutsideEvent_Inbound_'+currentEvent.store+'.xlsx');
+  showToast('Excel exported.', 'success');
+}
+
+/* ══════════════════════════════════════════════════════
+   DELETE MODAL (shared, outbound working list / inbound list)
+   ══════════════════════════════════════════════════════ */
+function askDelete(which, idx){
+  const upc = which==='out' ? outboundWorkingList[idx] : inboundList[idx];
+
+  if(which==='out'){
+    const remainingInOutboundAfterDelete = outboundWorkingList.filter(u=>u===upc).length - 1;
+    const committedInbound = (currentEvent && currentEvent.inboundList) ? currentEvent.inboundList.filter(u=>u===upc).length : 0;
+    const committedSold = (currentEvent && currentEvent.soldManual) ? (currentEvent.soldManual[upc]||0) : 0;
+    const committed = committedInbound + committedSold;
+    if(committed > 0 && remainingInOutboundAfterDelete < committed){
+      showToast("⚠️ You can't delete this UPC: it already has "+committed+' unit(s) registered in Inbound/Sales for this event. Delete those Inbound entries first.', 'error');
+      return;
+    }
+  }
+
+  pendingDelete = {which, idx};
+  document.getElementById('deleteModalMsg').innerHTML =
+    `Are you sure you want to delete UPC <strong>${escHtml(upc)}</strong> (#${idx+1})?<br/>Esta acción no se puede deshacer.`;
+  document.getElementById('deleteModal').classList.add('open');
+}
+function closeDeleteModal(){ document.getElementById('deleteModal').classList.remove('open'); pendingDelete=null; }
+function confirmDelete(){
+  if(!pendingDelete) return;
+  if(pendingDelete.which==='out'){
+    outboundWorkingList.splice(pendingDelete.idx,1);
+    renderOutboundList(); renderOutboundSummary();
+  } else if(pendingDelete.which==='in'){
+    inboundList.splice(pendingDelete.idx,1);
+    inboundScanSummary = buildSummary(inboundList);
+    renderInboundList();
+    populateSoldSelect();
+    renderCompareTable();
+  } else if(pendingDelete.which==='sold'){
+    delete soldManual[pendingDelete.upc];
+    editingSoldUpc = null;
+    populateSoldSelect();
+    renderSoldList();
+    renderCompareTable();
+  } else if(pendingDelete.which==='cmpsold'){
+    delete cmpSoldManual[pendingDelete.upc];
+    editingCmpSoldUpc = null;
+    populateCmpSoldSelect();
+    renderCmpSoldList();
+    renderCmpCompareTable();
+  }
+  closeDeleteModal();
+  showToast('Deleted.', 'info');
+}
+document.getElementById('deleteModal').addEventListener('click', function(e){ if(e.target===this) closeDeleteModal(); });
+
+/* ══════════════════════════════════════════════════════
+   UTILS
+   ══════════════════════════════════════════════════════ */
+function buildSummary(list){ return list.reduce((a,u)=>{a[u]=(a[u]||0)+1; return a;},{}); }
+function formatDisplayDate(dateStr){
+  if(!dateStr) return '';
+  const [y,m,d] = dateStr.split('-');
+  return `${parseInt(m)}/${parseInt(d)}/${y}`;
+}
+function escHtml(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function flash(tbodyId, cyan){
+  const el = document.getElementById(tbodyId);
+  const row = el.lastElementChild;
+  if(row){
+    row.classList.add('scan-flash');
+    if(cyan) row.classList.add('cyan');
+    setTimeout(()=>row.classList.remove('scan-flash','cyan'), 400);
+  }
+}
+let toastTimer=null;
+function showToast(msg, type='info'){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show '+type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.className=''; }, 3000);
+}
+
+/* ══════════════════════════════════════════════════════
+   COMPARE EXCEL DATA — paste-based Outbound/Inbound comparison
+   ══════════════════════════════════════════════════════ */
+let cmpOutboundSummary = {};
+let cmpInboundSummary = {};
+let cmpSoldManual = {};
+let editingCmpSoldUpc = null;
+let cmpChartInstance = null;
+
+function openCompareView(){
+  switchView('viewCompare', '🔀 Compare Excel Data');
+  populateCmpSoldSelect();
+  renderCmpSoldList();
+  renderCmpCompareTable();
+}
+
+function parseUpcLines(text){
+  return text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+}
+
+/* Portfolio demo: fills the Compare Excel textareas with fictional sample
+   data (including one inconsistent UPC to showcase the "Error (n)" detection). */
+function loadCompareSample(){
+  const outbound = [
+    '111111111111','111111111111','111111111111','111111111111','111111111111',
+    '222222222222','222222222222','222222222222',
+    '333333333333','333333333333','333333333333','333333333333',
+    '444444444444','444444444444',
+    '555555555555'
+  ];
+  const inbound = [
+    '111111111111','111111111111','111111111111',
+    '222222222222','222222222222','222222222222',
+    '333333333333','333333333333',
+    '444444444444',
+    '999999999999','999999999999'
+  ];
+  document.getElementById('cmpOutboundText').value = outbound.join('\n');
+  document.getElementById('cmpInboundText').value = inbound.join('\n');
+  runCompare();
+}
+function runCompare(){
+  const outLines = parseUpcLines(document.getElementById('cmpOutboundText').value);
+  const inLines = parseUpcLines(document.getElementById('cmpInboundText').value);
+  if(!outLines.length && !inLines.length){
+    showToast('Paste at least one UPC list to compare.', 'error');
+    return;
+  }
+  cmpOutboundSummary = buildSummary(outLines);
+  cmpInboundSummary = buildSummary(inLines);
+  cmpSoldManual = {};
+  editingCmpSoldUpc = null;
+  populateCmpSoldSelect();
+  renderCmpSoldList();
+  clearCmpCompareFilters();
+  showToast('Compared ' + outLines.length + ' Outbound / ' + inLines.length + ' Inbound lines.', 'success');
+}
+
+function clearCompare(){
+  document.getElementById('cmpOutboundText').value = '';
+  document.getElementById('cmpInboundText').value = '';
+  cmpOutboundSummary = {};
+  cmpInboundSummary = {};
+  cmpSoldManual = {};
+  editingCmpSoldUpc = null;
+  populateCmpSoldSelect();
+  renderCmpSoldList();
+  clearCmpCompareFilters();
+  showToast('Cleared.', 'info');
+}
+
+function cmpRemainingFor(upc){
+  const out = cmpOutboundSummary[upc] || 0;
+  const inn = cmpInboundSummary[upc] || 0;
+  const sold = cmpSoldManual[upc] || 0;
+  return out - inn - sold;
+}
+function cmpCapForSold(upc){
+  const out = cmpOutboundSummary[upc] || 0;
+  const inn = cmpInboundSummary[upc] || 0;
+  return out - inn;
+}
+/* ── Searchable UPC combobox: Compare Excel "Register Sales" ── */
+let cmpAvailableUpcs = [];
+let selectedCmpSoldUpc = null;
+
+function populateCmpSoldSelect(){
+  cmpAvailableUpcs = Object.keys(cmpOutboundSummary).filter(u => cmpRemainingFor(u) > 0);
+  if(selectedCmpSoldUpc && !cmpAvailableUpcs.includes(selectedCmpSoldUpc)){
+    selectedCmpSoldUpc = null;
+    const inp = document.getElementById('cmpSoldUpcSearch');
+    if(inp) inp.value = '';
+  }
+  renderCmpSoldUpcDropdown();
+}
+function renderCmpSoldUpcDropdown(){
+  const dd = document.getElementById('cmpSoldUpcDropdown');
+  if(!dd) return;
+  const q = (document.getElementById('cmpSoldUpcSearch').value || '').trim();
+  const matches = q ? cmpAvailableUpcs.filter(u => u.includes(q)) : cmpAvailableUpcs;
+  if(!matches.length){
+    dd.innerHTML = `<div class="combo-empty">${cmpAvailableUpcs.length ? 'No UPCs match “'+escHtml(q)+'”' : 'No UPCs available to mark as sold'}</div>`;
+    return;
+  }
+  dd.innerHTML = matches.map(u=>`
+    <div class="combo-opt" data-upc="${escHtml(u)}">
+      <span>${escHtml(u)}</span><span class="co-avail">available: ${cmpRemainingFor(u)}</span>
+    </div>
+  `).join('');
+}
+function openCmpSoldUpcDropdown(){ renderCmpSoldUpcDropdown(); document.getElementById('cmpSoldUpcDropdown').classList.add('open'); }
+function closeCmpSoldUpcDropdown(){ document.getElementById('cmpSoldUpcDropdown').classList.remove('open'); }
+function selectCmpSoldUpc(upc){
+  selectedCmpSoldUpc = upc;
+  document.getElementById('cmpSoldUpcSearch').value = upc;
+  closeCmpSoldUpcDropdown();
+}
+(function initCmpSoldCombo(){
+  const inp = document.getElementById('cmpSoldUpcSearch');
+  const dd = document.getElementById('cmpSoldUpcDropdown');
+  if(!inp || !dd) return;
+  inp.addEventListener('input', ()=>{
+    selectedCmpSoldUpc = null;
+    openCmpSoldUpcDropdown();
+  });
+  inp.addEventListener('focus', openCmpSoldUpcDropdown);
+  inp.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){
+      e.preventDefault();
+      const val = inp.value.trim();
+      const exact = cmpAvailableUpcs.find(u=>u===val);
+      if(exact) selectCmpSoldUpc(exact);
+    } else if(e.key==='Escape'){ closeCmpSoldUpcDropdown(); }
+  });
+  dd.addEventListener('click', e=>{
+    const opt = e.target.closest('.combo-opt');
+    if(opt && opt.dataset.upc !== undefined) selectCmpSoldUpc(opt.dataset.upc);
+  });
+  document.addEventListener('click', e=>{
+    if(!e.target.closest('#cmpSoldUpcSearch') && !e.target.closest('#cmpSoldUpcDropdown')) closeCmpSoldUpcDropdown();
+  });
+})();
+
+function addCmpSoldManual(){
+  const upc = selectedCmpSoldUpc || document.getElementById('cmpSoldUpcSearch').value.trim();
+  const qty = parseInt(document.getElementById('cmpSoldQtyInput').value, 10);
+  if(!upc || !cmpAvailableUpcs.includes(upc)){ showToast('Select a valid UPC from the list.', 'error'); return; }
+  if(!qty || qty<=0){ showToast('Enter a valid quantity.', 'error'); return; }
+  const remaining = cmpRemainingFor(upc);
+  if(qty > remaining){
+    showToast('⚠️ Only ' + remaining + ' unit(s) available of ' + upc + ' left to mark as sold.', 'error');
+    return;
+  }
+  cmpSoldManual[upc] = (cmpSoldManual[upc] || 0) + qty;
+  document.getElementById('cmpSoldQtyInput').value = '';
+  document.getElementById('cmpSoldUpcSearch').value = '';
+  selectedCmpSoldUpc = null;
+  populateCmpSoldSelect();
+  renderCmpSoldList();
+  renderCmpCompareTable();
+  showToast('Sale registered: ' + qty + ' × ' + upc, 'success');
+}
+function renderCmpSoldList(){
+  const entries = Object.entries(cmpSoldManual).filter(([,q]) => q > 0);
+  const tbody = document.getElementById('cmpSoldTbody');
+  const table = document.getElementById('cmpSoldTable');
+  const empty = document.getElementById('cmpSoldEmpty');
+  document.getElementById('cmpSoldCount').textContent = entries.length + ' UPCs';
+  if(!entries.length){ empty.style.display=''; table.style.display='none'; return; }
+  empty.style.display='none'; table.style.display='';
+  tbody.innerHTML = entries.map(([upc, qty])=>{
+    if(editingCmpSoldUpc === upc){
+      return `<tr>
+        <td>${escHtml(upc)}</td>
+        <td><input type="number" min="0" class="edit-qty-input" id="cmpEditQtyInput" value="${qty}" /></td>
+        <td class="row-actions">
+          <button class="btn-mini-save" onclick="saveCmpSoldEdit('${upc}')">✓</button>
+          <button class="btn-mini-cancel" onclick="cancelCmpSoldEdit()">✕</button>
+        </td>
+      </tr>`;
+    }
+    return `<tr>
+      <td>${escHtml(upc)}</td>
+      <td><span class="qty-badge">${qty}</span></td>
+      <td class="row-actions">
+        <button class="btn-edit" onclick="startCmpSoldEdit('${upc}')" title="Edit">✏️</button>
+        <button class="btn-del" onclick="askDeleteCmpSold('${upc}')" title="Delete">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+function startCmpSoldEdit(upc){ editingCmpSoldUpc = upc; renderCmpSoldList(); setTimeout(()=>{ const i=document.getElementById('cmpEditQtyInput'); if(i){ i.focus(); i.select(); } }, 30); }
+function cancelCmpSoldEdit(){ editingCmpSoldUpc = null; renderCmpSoldList(); }
+function saveCmpSoldEdit(upc){
+  const input = document.getElementById('cmpEditQtyInput');
+  const newQty = parseInt(input.value, 10);
+  if(isNaN(newQty) || newQty < 0){ showToast('Enter a valid quantity.', 'error'); return; }
+  if(newQty === 0){
+    delete cmpSoldManual[upc];
+  } else {
+    const cap = cmpCapForSold(upc);
+    if(newQty > cap){
+      showToast('⚠️ Maximum allowed for ' + upc + ': ' + cap + ' (Outbound − Inbound).', 'error');
+      return;
+    }
+    cmpSoldManual[upc] = newQty;
+  }
+  editingCmpSoldUpc = null;
+  populateCmpSoldSelect();
+  renderCmpSoldList();
+  renderCmpCompareTable();
+  showToast('Sale updated.', 'success');
+}
+function askDeleteCmpSold(upc){
+  pendingDelete = {which:'cmpsold', upc};
+  document.getElementById('deleteModalMsg').innerHTML =
+    `Are you sure you want to delete the registered sale of <strong>${escHtml(upc)}</strong> (${cmpSoldManual[upc]||0} unit(s))?<br/>This action cannot be undone.`;
+  document.getElementById('deleteModal').classList.add('open');
+}
+
+function renderCmpCompareTable(){
+  const allUpcs = new Set([...Object.keys(cmpOutboundSummary), ...Object.keys(cmpInboundSummary), ...Object.keys(cmpSoldManual)]);
+  const tbody = document.getElementById('cmpCompareTbody');
+  let totOut=0, totIn=0, totSold=0, totDiff=0, errorCount=0;
+  const rowsData = [];
+  [...allUpcs].sort().forEach(upc=>{
+    const out = cmpOutboundSummary[upc] || 0;
+    const inn = cmpInboundSummary[upc] || 0;
+    const sold = cmpSoldManual[upc] || 0;
+    const diff = (inn + sold) - out;
+    const isError = out === 0 && (inn > 0 || sold > 0);
+    totOut+=out; totIn+=inn; totSold+=sold; totDiff+=diff;
+    if(isError) errorCount++;
+    rowsData.push({upc,out,inn,sold,diff,isError});
+  });
+
+  // View filters (do not affect totals/chart — those always reflect the full dataset pasted)
+  const filterEl = document.getElementById('cmpCompareFilter');
+  const negOnlyEl = document.getElementById('cmpNegOnlyFilter');
+  const errorOnlyEl = document.getElementById('cmpErrorOnlyFilter');
+  const filterText = filterEl ? filterEl.value.trim() : '';
+  const negOnly = negOnlyEl ? negOnlyEl.checked : false;
+  const errorOnly = errorOnlyEl ? errorOnlyEl.checked : false;
+  let displayRows = rowsData;
+  if(filterText) displayRows = displayRows.filter(r => r.upc.includes(filterText));
+  if(negOnly) displayRows = displayRows.filter(r => r.diff < 0);
+  if(errorOnly) displayRows = displayRows.filter(r => r.isError);
+
+  if(!displayRows.length){
+    const activeFilters = [negOnly ? 'negative Difference only' : null, errorOnly ? 'Error only' : null].filter(Boolean).join(', ');
+    tbody.innerHTML = `<tr><td colspan="5"><div class="cmp-filter-empty">🔍 No UPCs match the current filter${activeFilters ? ' (' + activeFilters + ')' : ''}.</div></td></tr>`;
+  } else {
+    tbody.innerHTML = displayRows.map(r=>{
+      let diffClass, diffLabel;
+      if(r.isError){
+        diffClass = 'diff-neg';
+        diffLabel = 'Error (' + r.diff + ')';
+      } else {
+        diffClass = r.diff>0 ? 'diff-pos' : (r.diff<0 ? 'diff-neg' : 'diff-zero');
+        diffLabel = String(r.diff);
+      }
+      return `<tr>
+        <td>${escHtml(r.upc)}</td>
+        <td><span class="qty-badge">${r.out}</span></td>
+        <td><span class="qty-badge cyan">${r.inn}</span></td>
+        <td>${r.sold}</td>
+        <td class="${diffClass}">${diffLabel}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('cmpCount').textContent = totSold + ' sold' + (displayRows.length !== rowsData.length ? ' · showing ' + displayRows.length + '/' + rowsData.length : '');
+  document.getElementById('cmpTotals').textContent = `${totOut} / ${totIn} / ${totSold} / ${totDiff}`;
+  const cmpErrorRow = document.getElementById('cmpErrorRow');
+  if(errorCount > 0){
+    cmpErrorRow.style.display = '';
+    cmpErrorRow.textContent = '⚠️ Error (' + errorCount + ') UPCs that were not scanned in Outbound but were scanned in Inbound';
+  } else {
+    cmpErrorRow.style.display = 'none';
+  }
+  drawCmpChart(totOut, totIn, totSold, totDiff);
+}
+function clearCmpCompareFilters(){
+  const f = document.getElementById('cmpCompareFilter'); if(f) f.value = '';
+  const n = document.getElementById('cmpNegOnlyFilter'); if(n) n.checked = false;
+  const e = document.getElementById('cmpErrorOnlyFilter'); if(e) e.checked = false;
+  renderCmpCompareTable();
+}
+function drawCmpChart(out, inn, sold, diff){
+  const ctx = document.getElementById('cmpChart');
+  if(!ctx) return;
+  if(cmpChartInstance) cmpChartInstance.destroy();
+  cmpChartInstance = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:['Outbound','Inbound','Sold','Difference'],
+      datasets:[{
+        data:[out,inn,sold,diff],
+        backgroundColor:['#f5a623','#2dd4c8','#33c17a', diff<0 ? '#e5484d' : '#828a9b'],
+        borderRadius:6
+      }]
+    },
+    options:{
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#828a9b'}, grid:{color:'#2c3241'}},
+        y:{ticks:{color:'#828a9b'}, grid:{color:'#2c3241'}, beginAtZero:true}
+      }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   CAMERA SCAN — native BarcodeDetector, lazy ZXing fallback
+   ══════════════════════════════════════════════════════ */
+let camStream = null;
+let camTarget = null;      // 'out' | 'in'
+let camNativeTimer = null; // interval id for BarcodeDetector loop
+let camZxingReader = null; // ZXing.BrowserMultiFormatReader instance
+let camLastCode = null;
+let camLastCodeAt = 0;
+let zxingLoadPromise = null;
+
+function loadZxing(){
+  if(window.ZXing) return Promise.resolve();
+  if(zxingLoadPromise) return zxingLoadPromise;
+  zxingLoadPromise = new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.20.0/umd/index.min.js';
+    s.onload = ()=>resolve();
+    s.onerror = ()=>reject(new Error('zxing-load-failed'));
+    document.head.appendChild(s);
+  });
+  return zxingLoadPromise;
+}
+
+function setCamStatus(msg, cls){
+  const el = document.getElementById('camStatus');
+  el.textContent = msg;
+  el.className = 'cam-status' + (cls ? ' ' + cls : '');
+}
+
+async function openCameraScan(which){
+  camTarget = which;
+  document.getElementById('camOverlay').classList.add('open');
+  setCamStatus('Requesting camera access…');
+  try{
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+  }catch(e){
+    setCamStatus('Could not access the camera. Check browser permissions.', 'error');
+    return;
+  }
+  const video = document.getElementById('camVideo');
+  video.srcObject = camStream;
+  try{ await video.play(); }catch(e){}
+
+  if('BarcodeDetector' in window){
+    setCamStatus('Point the camera at a barcode…');
+    startNativeDetection(video);
+  } else {
+    setCamStatus('Loading scanner…');
+    try{
+      await loadZxing();
+      startZxingDetection(video);
+      setCamStatus('Point the camera at a barcode…');
+    }catch(e){
+      setCamStatus('Could not load the scanner library. Check your internet connection.', 'error');
+    }
+  }
+}
+
+function startNativeDetection(video){
+  let detector;
+  try{
+    detector = new BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf'] });
+  }catch(e){
+    detector = new BarcodeDetector();
+  }
+  clearInterval(camNativeTimer);
+  camNativeTimer = setInterval(async ()=>{
+    if(!camStream) return;
+    try{
+      const codes = await detector.detect(video);
+      if(codes && codes.length){ handleCameraCode(codes[0].rawValue); }
+    }catch(e){ /* frame not ready yet, ignore */ }
+  }, 250);
+}
+
+function startZxingDetection(video){
+  camZxingReader = new ZXing.BrowserMultiFormatReader();
+  camZxingReader.decodeFromVideoElement(video, (result, err)=>{
+    if(result){ handleCameraCode(result.getText()); }
+  });
+}
+
+function handleCameraCode(code){
+  const now = Date.now();
+  if(code === camLastCode && (now - camLastCodeAt) < 1500) return; // avoid duplicate reads of the same code
+  camLastCode = code;
+  camLastCodeAt = now;
+
+  const inp = camTarget === 'out' ? obScanInput : document.getElementById('ibScanInput');
+  inp.value = code;
+  commitScan(camTarget);
+
+  setCamStatus('Detected: ' + code, 'detected');
+  if(navigator.vibrate) navigator.vibrate(80);
+  setTimeout(()=>{ if(camStream) setCamStatus('Point the camera at a barcode…'); }, 1200);
+}
+
+function closeCameraScan(){
+  document.getElementById('camOverlay').classList.remove('open');
+  clearInterval(camNativeTimer);
+  camNativeTimer = null;
+  if(camZxingReader){ try{ camZxingReader.reset(); }catch(e){} camZxingReader = null; }
+  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream = null; }
+  const video = document.getElementById('camVideo');
+  if(video) video.srcObject = null;
+  camLastCode = null;
+  camTarget = null;
+}
+document.getElementById('camOverlay').addEventListener('click', function(e){ if(e.target === this) closeCameraScan(); });
+
+</script>
+</body>
+</html>

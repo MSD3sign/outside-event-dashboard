@@ -4,8 +4,6 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Outside Event · Dashboard</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
 
@@ -389,7 +387,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.14</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.15</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -634,7 +632,6 @@
       </div>
       <div class="cmp-actions">
         <button class="btn-cmp" onclick="runCompare()">🔀 Compare</button>
-        <button class="btn-ghost" onclick="loadCompareSample()">📥 Load sample data</button>
         <button class="btn-ghost" onclick="clearCompare()">Clear</button>
       </div>
       <div class="inline-note">⚡ Paste the full list copied from Excel, one UPC per line, keeping duplicates — each repeated line counts as one more unit of that UPC.</div>
@@ -744,6 +741,66 @@
 /* ══════════════════════════════════════════════════════
    STATE
    ══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   RESILIENT LIBRARY LOADING — cascading multi-CDN fallback
+   ══════════════════════════════════════════════════════
+   Corporate networks sometimes block one CDN domain but not
+   another. Instead of a single hard-coded <script src>, each
+   third-party library is loaded lazily and tries several CDN
+   mirrors in sequence until one succeeds (or all fail, in
+   which case the app degrades gracefully instead of breaking
+   silently — scanning via USB/manual entry never depends on
+   any of these libraries).
+   ══════════════════════════════════════════════════════ */
+function loadScriptCascade(urls, checkFn){
+  return new Promise((resolve, reject) => {
+    if(checkFn()) return resolve(true);
+    let i = 0;
+    const tryNext = () => {
+      if(i >= urls.length){ reject(new Error('all-cdns-failed')); return; }
+      const url = urls[i++];
+      const s = document.createElement('script');
+      s.src = url;
+      s.onload = () => { if(checkFn()) resolve(true); else tryNext(); };
+      s.onerror = () => tryNext();
+      document.head.appendChild(s);
+    };
+    tryNext();
+  });
+}
+
+const XLSX_CDNS = [
+  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+  'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+  'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+];
+const CHARTJS_CDNS = [
+  'https://cdn.jsdelivr.net/npm/chart.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js',
+  'https://unpkg.com/chart.js@4/dist/chart.umd.min.js'
+];
+const ZXING_CDNS = [
+  'https://cdn.jsdelivr.net/npm/@zxing/library@0.20.0/umd/index.min.js',
+  'https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/zxing/0.20.0/index.min.js'
+];
+
+let xlsxReadyPromise = null, chartReadyPromise = null;
+function ensureXLSX(){
+  if(!xlsxReadyPromise) xlsxReadyPromise = loadScriptCascade(XLSX_CDNS, () => typeof window.XLSX !== 'undefined');
+  return xlsxReadyPromise;
+}
+function ensureChart(){
+  if(!chartReadyPromise) chartReadyPromise = loadScriptCascade(CHARTJS_CDNS, () => typeof window.Chart !== 'undefined');
+  return chartReadyPromise;
+}
+// Kick off both loads in the background as soon as the app starts —
+// non-blocking: scanning and saving never wait on these.
+ensureXLSX().catch(()=>{});
+ensureChart().then(()=>{
+  if(lastIbChartArgs) drawChart(...lastIbChartArgs);
+  if(lastCmpChartArgs) drawCmpChart(...lastCmpChartArgs);
+}).catch(()=>{});
 let kioskMode = 'outbound';
 let kioskChoice = 'new';
 let selectedEventId = null;
@@ -1224,10 +1281,13 @@ async function saveOutboundEvent(){
   const where = storageMode === 'folder' ? ('folder ("' + ev.__filename + '")') : 'this browser';
   showToast('✅ Event saved in ' + where + ' (' + outboundWorkingList.length + ' UPCs).', 'success');
 }
-function exportOutboundExcel(){
+async function exportOutboundExcel(){
   const store = document.getElementById('obStore').value.trim();
   const date = document.getElementById('obDate').value;
   if(!store || !date || !outboundWorkingList.length){ showToast('Fill in the fields and scan before exporting.', 'error'); return; }
+  showToast('Preparing Excel file…', 'info');
+  try{ await ensureXLSX(); }
+  catch(e){ showToast('⚠️ Could not load the Excel library from any source. Check your internet connection or try again later.', 'error'); return; }
   const summary = buildSummary(outboundWorkingList);
   const fmt = formatDisplayDate(date);
   const rows = [['Loc #', store], ['Date', fmt], ['Enter Location & Event Start Date'], [], [], ['UPC','Quantity']];
@@ -1551,8 +1611,23 @@ function clearIbCompareFilters(){
   renderCompareTable();
 }
 let ibChartInstance = null;
+let lastIbChartArgs = null;
 function drawChart(out,inn,sold,diff){
+  lastIbChartArgs = [out,inn,sold,diff];
   const ctx = document.getElementById('ibChart');
+  if(typeof window.Chart === 'undefined'){
+    const wrap = ctx.closest('.chart-wrap');
+    if(wrap && !document.getElementById('ibChartPending')){
+      const msg = document.createElement('div');
+      msg.id = 'ibChartPending';
+      msg.style.cssText = 'padding:30px 10px;text-align:center;color:var(--muted);font-size:.8rem';
+      msg.textContent = '📊 Loading chart library… (falls back automatically once available)';
+      wrap.insertBefore(msg, ctx);
+    }
+    return;
+  }
+  const pending = document.getElementById('ibChartPending');
+  if(pending) pending.remove();
   if(ibChartInstance) ibChartInstance.destroy();
   ibChartInstance = new Chart(ctx, {
     type:'bar',
@@ -1581,8 +1656,11 @@ async function saveInboundEvent(){
   const ok = await persistEvent(currentEvent);
   if(ok) showToast('✅ Inbound saved.', 'success');
 }
-function exportInboundExcel(){
+async function exportInboundExcel(){
   if(!currentEvent){ showToast('Select an event first.', 'error'); return; }
+  showToast('Preparing Excel file…', 'info');
+  try{ await ensureXLSX(); }
+  catch(e){ showToast('⚠️ Could not load the Excel library from any source. Check your internet connection or try again later.', 'error'); return; }
   const allUpcs = new Set([...Object.keys(inboundOutboundSummary), ...Object.keys(inboundScanSummary), ...Object.keys(soldManual)]);
   const rows = [['Loc #', currentEvent.store], ['Date', formatDisplayDate(currentEvent.date)], ['Inbound Return'], [], [],
     ['UPC','Outbound','Inbound','Sold','Difference']];
@@ -1702,27 +1780,6 @@ function parseUpcLines(text){
   return text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
 }
 
-/* Portfolio demo: fills the Compare Excel textareas with fictional sample
-   data (including one inconsistent UPC to showcase the "Error (n)" detection). */
-function loadCompareSample(){
-  const outbound = [
-    '111111111111','111111111111','111111111111','111111111111','111111111111',
-    '222222222222','222222222222','222222222222',
-    '333333333333','333333333333','333333333333','333333333333',
-    '444444444444','444444444444',
-    '555555555555'
-  ];
-  const inbound = [
-    '111111111111','111111111111','111111111111',
-    '222222222222','222222222222','222222222222',
-    '333333333333','333333333333',
-    '444444444444',
-    '999999999999','999999999999'
-  ];
-  document.getElementById('cmpOutboundText').value = outbound.join('\n');
-  document.getElementById('cmpInboundText').value = inbound.join('\n');
-  runCompare();
-}
 function runCompare(){
   const outLines = parseUpcLines(document.getElementById('cmpOutboundText').value);
   const inLines = parseUpcLines(document.getElementById('cmpInboundText').value);
@@ -1970,9 +2027,24 @@ function clearCmpCompareFilters(){
   const e = document.getElementById('cmpErrorOnlyFilter'); if(e) e.checked = false;
   renderCmpCompareTable();
 }
+let lastCmpChartArgs = null;
 function drawCmpChart(out, inn, sold, diff){
+  lastCmpChartArgs = [out,inn,sold,diff];
   const ctx = document.getElementById('cmpChart');
   if(!ctx) return;
+  if(typeof window.Chart === 'undefined'){
+    const wrap = ctx.closest('.chart-wrap');
+    if(wrap && !document.getElementById('cmpChartPending')){
+      const msg = document.createElement('div');
+      msg.id = 'cmpChartPending';
+      msg.style.cssText = 'padding:30px 10px;text-align:center;color:var(--muted);font-size:.8rem';
+      msg.textContent = '📊 Loading chart library… (falls back automatically once available)';
+      wrap.insertBefore(msg, ctx);
+    }
+    return;
+  }
+  const pending = document.getElementById('cmpChartPending');
+  if(pending) pending.remove();
   if(cmpChartInstance) cmpChartInstance.destroy();
   cmpChartInstance = new Chart(ctx, {
     type:'bar',
@@ -2006,15 +2078,8 @@ let camLastCodeAt = 0;
 let zxingLoadPromise = null;
 
 function loadZxing(){
-  if(window.ZXing) return Promise.resolve();
-  if(zxingLoadPromise) return zxingLoadPromise;
-  zxingLoadPromise = new Promise((resolve, reject)=>{
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.20.0/umd/index.min.js';
-    s.onload = ()=>resolve();
-    s.onerror = ()=>reject(new Error('zxing-load-failed'));
-    document.head.appendChild(s);
-  });
+  if(typeof window.ZXing !== 'undefined') return Promise.resolve();
+  if(!zxingLoadPromise) zxingLoadPromise = loadScriptCascade(ZXING_CDNS, () => typeof window.ZXing !== 'undefined');
   return zxingLoadPromise;
 }
 
@@ -2048,7 +2113,7 @@ async function openCameraScan(which){
       startZxingDetection(video);
       setCamStatus('Point the camera at a barcode…');
     }catch(e){
-      setCamStatus('Could not load the scanner library. Check your internet connection.', 'error');
+      setCamStatus('Could not load the scanner library from any source. Check your internet connection or ask IT to allow cdn.jsdelivr.net / unpkg.com / cdnjs.cloudflare.com. You can still scan with the USB reader or the manual "+ Add" field — those never need internet.', 'error');
     }
   }
 }

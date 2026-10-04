@@ -4,6 +4,16 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 
 ---
 
+## v2.16
+**ZXing incrustado — escaneo por cámara 100% offline**
+
+- Se recibió el archivo real de **@zxing/library v0.20.0** (build UMD `index.min.js`, 336 KB) y se verificó íntegro (`node --check` pasó, expone `ZXing.BrowserMultiFormatReader`, sin `</script>` literal que rompiera el HTML).
+- La librería se **incrustó directamente dentro del `<head>`** del `index.html`, en su propio bloque `<script>`, eliminando por completo la dependencia de `cdn.jsdelivr.net` (o cualquier CDN) para el fallback de escaneo por cámara en navegadores sin `BarcodeDetector` nativo (Safari/iPad).
+- `loadZxing()` ahora solo verifica que `window.ZXing` ya esté definido (lo está, de forma síncrona, apenas carga la página) — se eliminó el arreglo `ZXING_CDNS` y la lógica de cascada específica para ZXing, que quedó obsoleta.
+- **Chart.js y SheetJS/XLSX siguen igual que en v2.15** (carga en cascada multi-CDN) — no se incrustaron en esta versión, ya que el pedido fue específico para ZXing.
+- El archivo pasó de ~96 KB a ~428 KB por la librería incrustada; sigue siendo un único `.html` portátil.
+- Entregado como `index.html` + `README.md` (documentación de este cambio específico).
+
 ## v2.15
 **Carga resiliente multi-CDN (sin bloqueo por firewall de empresa)**
 
@@ -94,7 +104,7 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
   - ✏️ Editar cantidad en línea (con validación de máximo permitido).
   - 🗑 Eliminar con confirmación.
 - Se agregó el número de versión visible junto al título de la app.
-- Se agregó **footer**: año de creación (2026), crédito al creador y enlace "Para sugerencias" que abre el correo.
+- Se agregó **footer**: año de creación (2026), crédito al creador (Miguel Salazar) y enlace "Para sugerencias" que abre el correo.
 
 ## v2.5
 **Corrección de IDs de eventos duplicados**

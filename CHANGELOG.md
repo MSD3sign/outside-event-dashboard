@@ -4,6 +4,17 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 
 ---
 
+## v2.18
+**Compare Excel: identificación de evento + guardar/reabrir**
+
+- Se agregaron los campos **Store #**, **Event Name** y **Date** a la sección **Compare Excel**, con el mismo estilo (`work-topbar`) que Outbound e Inbound.
+- Se agregó el botón **"💾 Save Event"**, que guarda las dos listas de UPCs pegadas (texto completo, tal cual) junto con los datos del evento.
+- El guardado usa el **mismo almacenamiento y el mismo listado de eventos** que Outbound/Inbound (carpeta local / `window.storage` / `localStorage`, un archivo `.json` por evento) — el evento creado desde Compare Excel aparece en el índice general de eventos guardados.
+- Se agregó el selector **"Switch Event"** (mismo patrón que Outbound) dentro de la propia sección Compare Excel, para reabrir cualquier evento guardado: repone Store #/Event Name/Date y ambas listas pegadas (`cmpOutboundText`/`cmpInboundText`, nuevos campos del modelo de datos). Si el evento fue creado en Outbound/Inbound y no tiene esos campos propios, reconstruye las listas a partir de `outboundList`/`inboundList` (un UPC por línea).
+- Las ventas registradas en Compare Excel se guardan aparte (`cmpSoldManual`), sin tocar el `soldManual` que usa Inbound — evita que guardar desde un módulo pise los datos del otro si comparten el mismo evento.
+- "Clear" ahora también limpia los campos del evento y el selector, para no sobrescribir por accidente un evento cargado.
+- No se modificó ninguna otra parte de la app (se verificó con diff línea por línea contra v2.17).
+
 ## v2.17
 **Qty sold por defecto = 1 en Register Sales**
 

@@ -4,6 +4,13 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 
 ---
 
+## v2.17
+**Qty sold por defecto = 1 en Register Sales**
+
+- En el módulo **Register Sales**, tanto en **Inbound** como en **Compare Excel**, el campo "Qty sold" ahora se precarga con el valor **1** automáticamente cada vez que se selecciona un UPC en el combobox buscable (clic en una opción del dropdown, o Enter sobre un UPC exacto).
+- El usuario puede presionar "✓ Register Sale" directamente sin escribir nada, o cambiar el número manualmente si la venta fue de una cantidad distinta a 1.
+- No se modificó ninguna otra parte de la app.
+
 ## v2.16
 **ZXing incrustado — escaneo por cámara 100% offline**
 

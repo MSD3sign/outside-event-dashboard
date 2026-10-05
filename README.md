@@ -25,4 +25,4 @@ Open the live demo, go to **🔀 Compare Excel**, and press **📥 Load sample d
 
 ## Version history
 
-See the full changelog in [CHANGELOG.md](CHANGELOG.md). Current version: **v2.16**.
+See the full changelog in [CHANGELOG.md](CHANGELOG.md). Current version: **v2.17**.

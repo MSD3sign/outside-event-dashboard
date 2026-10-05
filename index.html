@@ -393,7 +393,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.16</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.17</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -1438,6 +1438,7 @@ function closeSoldUpcDropdown(){ document.getElementById('soldUpcDropdown').clas
 function selectSoldUpc(upc){
   selectedSoldUpc = upc;
   document.getElementById('soldUpcSearch').value = upc;
+  document.getElementById('soldQtyInput').value = 1; // default qty — user can still edit it
   closeSoldUpcDropdown();
 }
 (function initSoldCombo(){
@@ -1858,6 +1859,7 @@ function closeCmpSoldUpcDropdown(){ document.getElementById('cmpSoldUpcDropdown'
 function selectCmpSoldUpc(upc){
   selectedCmpSoldUpc = upc;
   document.getElementById('cmpSoldUpcSearch').value = upc;
+  document.getElementById('cmpSoldQtyInput').value = 1; // default qty — user can still edit it
   closeCmpSoldUpcDropdown();
 }
 (function initCmpSoldCombo(){

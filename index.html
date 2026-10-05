@@ -393,7 +393,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.17</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.18</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -622,6 +622,27 @@
 
   <!-- ══════════════ COMPARE EXCEL DATA ══════════════ -->
   <div class="view" id="viewCompare">
+    <div class="work-topbar">
+      <div class="field">
+        <label>📍 Store #</label>
+        <input type="text" id="cmpStore" placeholder="e.g. 776" />
+      </div>
+      <div class="field">
+        <label>🏪 Event Name</label>
+        <input type="text" id="cmpEventName" placeholder="e.g. Summer Sale Event" />
+      </div>
+      <div class="field">
+        <label>📅 Date</label>
+        <input type="date" id="cmpDate" />
+      </div>
+      <div class="field" style="max-width:220px">
+        <label>Switch Event</label>
+        <select id="cmpEventSwitch" onchange="switchCmpEvent(this.value)">
+          <option value="">— New event —</option>
+        </select>
+      </div>
+    </div>
+
     <div class="panel" style="margin-bottom:18px">
       <div class="panel-header">
         <span class="panel-title">Paste UPC Lists from Excel</span>
@@ -639,8 +660,9 @@
       <div class="cmp-actions">
         <button class="btn-cmp" onclick="runCompare()">🔀 Compare</button>
         <button class="btn-ghost" onclick="clearCompare()">Clear</button>
+        <button class="btn-save" onclick="saveCmpEvent()">💾 Save Event</button>
       </div>
-      <div class="inline-note">⚡ Paste the full list copied from Excel, one UPC per line, keeping duplicates — each repeated line counts as one more unit of that UPC.</div>
+      <div class="inline-note">⚡ Paste the full list copied from Excel, one UPC per line, keeping duplicates — each repeated line counts as one more unit of that UPC. "Save Event" stores the Store #/Event Name/Date and both pasted lists together with the rest of your saved events, so you can reopen them later from the "Switch Event" dropdown above.</div>
     </div>
 
     <div class="main-grid">
@@ -1773,9 +1795,11 @@ let cmpInboundSummary = {};
 let cmpSoldManual = {};
 let editingCmpSoldUpc = null;
 let cmpChartInstance = null;
+let cmpEditingId = null; // id of the saved event being edited/continued; null = new/unsaved
 
 function openCompareView(){
   switchView('viewCompare', '🔀 Compare Excel Data');
+  populateCmpEventSwitch();
   populateCmpSoldSelect();
   renderCmpSoldList();
   renderCmpCompareTable();
@@ -1785,6 +1809,19 @@ function parseUpcLines(text){
   return text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
 }
 
+/* Recompute the Outbound/Inbound distinct summaries from whatever is
+   currently in the two textareas, then re-render everything that
+   depends on them. Shared by "Compare" and by loading a saved event. */
+function recomputeCmpSummaries(){
+  const outLines = parseUpcLines(document.getElementById('cmpOutboundText').value);
+  const inLines = parseUpcLines(document.getElementById('cmpInboundText').value);
+  cmpOutboundSummary = buildSummary(outLines);
+  cmpInboundSummary = buildSummary(inLines);
+  populateCmpSoldSelect();
+  renderCmpSoldList();
+  renderCmpCompareTable();
+}
+
 function runCompare(){
   const outLines = parseUpcLines(document.getElementById('cmpOutboundText').value);
   const inLines = parseUpcLines(document.getElementById('cmpInboundText').value);
@@ -1792,12 +1829,9 @@ function runCompare(){
     showToast('Paste at least one UPC list to compare.', 'error');
     return;
   }
-  cmpOutboundSummary = buildSummary(outLines);
-  cmpInboundSummary = buildSummary(inLines);
   cmpSoldManual = {};
   editingCmpSoldUpc = null;
-  populateCmpSoldSelect();
-  renderCmpSoldList();
+  recomputeCmpSummaries();
   clearCmpCompareFilters();
   showToast('Compared ' + outLines.length + ' Outbound / ' + inLines.length + ' Inbound lines.', 'success');
 }
@@ -1805,6 +1839,12 @@ function runCompare(){
 function clearCompare(){
   document.getElementById('cmpOutboundText').value = '';
   document.getElementById('cmpInboundText').value = '';
+  document.getElementById('cmpStore').value = '';
+  document.getElementById('cmpEventName').value = '';
+  document.getElementById('cmpDate').value = '';
+  const sel = document.getElementById('cmpEventSwitch');
+  if(sel) sel.value = '';
+  cmpEditingId = null;
   cmpOutboundSummary = {};
   cmpInboundSummary = {};
   cmpSoldManual = {};
@@ -1813,6 +1853,82 @@ function clearCompare(){
   renderCmpSoldList();
   clearCmpCompareFilters();
   showToast('Cleared.', 'info');
+}
+
+/* ── Save / load Compare Excel events (shared storage with Outbound/Inbound) ── */
+function populateCmpEventSwitch(){
+  const sel = document.getElementById('cmpEventSwitch');
+  if(!sel) return;
+  const sorted = [...eventsIndex].sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  sel.innerHTML = '<option value="">— New event —</option>' +
+    sorted.map(e=>`<option value="${e.id}">${escHtml(e.eventName||('Store '+e.store))} · ${escHtml(formatDisplayDate(e.date))}</option>`).join('');
+}
+async function switchCmpEvent(id){
+  if(!id){ clearCompare(); return; }
+  const ev = await loadEventById(id);
+  if(!ev){ showToast('Could not load the event.', 'error'); return; }
+  loadCmpEventData(ev);
+}
+function loadCmpEventData(ev){
+  cmpEditingId = ev.id;
+  document.getElementById('cmpStore').value = ev.store || '';
+  document.getElementById('cmpEventName').value = ev.eventName || '';
+  document.getElementById('cmpDate').value = ev.date || '';
+  // Prefer the raw pasted text saved from Compare Excel itself; fall back to
+  // reconstructing it from an Outbound/Inbound-scanned event (one UPC per line).
+  const outText = (ev.cmpOutboundText != null) ? ev.cmpOutboundText : (ev.outboundList || []).join('\n');
+  const inText = (ev.cmpInboundText != null) ? ev.cmpInboundText : (ev.inboundList || []).join('\n');
+  document.getElementById('cmpOutboundText').value = outText;
+  document.getElementById('cmpInboundText').value = inText;
+  cmpSoldManual = { ...(ev.cmpSoldManual || {}) };
+  editingCmpSoldUpc = null;
+  recomputeCmpSummaries();
+  clearCmpCompareFilters();
+  const sel = document.getElementById('cmpEventSwitch');
+  if(sel) sel.value = ev.id;
+  showToast('Event loaded into Compare Excel.', 'success');
+}
+async function saveCmpEvent(){
+  const store = document.getElementById('cmpStore').value.trim();
+  const eventName = document.getElementById('cmpEventName').value.trim();
+  const date = document.getElementById('cmpDate').value;
+  const outText = document.getElementById('cmpOutboundText').value;
+  const inText = document.getElementById('cmpInboundText').value;
+  if(!store){ showToast('Enter the Store #.', 'error'); return; }
+  if(!date){ showToast('Select the event date.', 'error'); return; }
+  if(!outText.trim() && !inText.trim()){ showToast('Paste at least one UPC list before saving.', 'error'); return; }
+
+  let id, ev;
+  if(cmpEditingId){
+    id = cmpEditingId;
+    const existing = await loadEventById(id);
+    ev = existing || blankEvent(store, eventName, date);
+    ev.id = id;
+  } else {
+    id = makeUniqueEventId(store, date);
+    ev = blankEvent(store, eventName, date);
+    ev.id = id;
+  }
+  ev.store = store; ev.eventName = eventName; ev.date = date;
+  ev.cmpOutboundText = outText;
+  ev.cmpInboundText = inText;
+  ev.cmpSoldManual = { ...cmpSoldManual };
+  ev.updatedAt = Date.now();
+
+  const ok = await persistEvent(ev);
+  if(!ok) return;
+  cmpEditingId = id;
+
+  if(storageMode !== 'folder'){
+    if(!eventsIndex.find(e=>e.id===id)) eventsIndex.push({id, store, eventName, date});
+    else eventsIndex = eventsIndex.map(e=> e.id===id ? {id, store, eventName, date} : e);
+    await saveEventsIndex();
+  }
+  populateCmpEventSwitch();
+  const sel = document.getElementById('cmpEventSwitch');
+  if(sel) sel.value = id;
+  const where = storageMode === 'folder' ? ('folder ("' + ev.__filename + '")') : 'this browser';
+  showToast('✅ Compare Excel event saved in ' + where + '.', 'success');
 }
 
 function cmpRemainingFor(upc){

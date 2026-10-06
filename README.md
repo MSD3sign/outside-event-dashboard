@@ -6,9 +6,9 @@ https://msd3sign.github.io/outside-event-dashboard/
 
 ## Qué cambió en esta versión (v2.20)
 
-**Compare Excel — 4 líneas informativas bajo el Event Chart:**
+**Compare Excel e Inbound — 4 líneas informativas bajo el Event Chart:**
 
-Debajo del gráfico (Event Chart) de la sección **Compare Excel** ahora aparecen, con estilo coherente (texto monoespaciado, mismo color/énfasis que el resto de la app):
+Debajo del gráfico (Event Chart) de la sección **Compare Excel** y del flujo principal de **Inbound** ahora aparecen, con estilo coherente (texto monoespaciado, mismo color/énfasis que el resto de la app):
 
 1. `Inbound (n) + Sold (n) = Total Inbound (n)`
 2. `Outbound (n) − Total Inbound (n) = (resultado)`

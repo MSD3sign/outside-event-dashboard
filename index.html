@@ -393,7 +393,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.18</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.19</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -717,6 +717,7 @@
             <span class="total-val" id="cmpTotals">0 / 0 / 0 / 0</span>
           </div>
           <div class="error-count-row" id="cmpErrorRow" style="display:none"></div>
+          <div class="error-count-row" id="cmpErrorUnitsRow" style="display:none"></div>
         </div>
 
       </div>
@@ -731,8 +732,8 @@
 </div>
 
 <footer style="max-width:1360px;margin:20px auto 0;padding:16px 20px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-top:1px solid var(--border);color:var(--muted);font-size:.75rem;">
-  <span>© 2026 · <b>MSD3sign</b> — Portfolio Project · by Miguel Salazar</span>
-  <span style="display:inline-flex;align-items:center;gap:12px;">
+  <span>© 2026 · MSD3sign — Portfolio Project · by Miguel Salazar</span>
+  <span style="display:inline-flex;gap:14px;">
     <a href="https://github.com/MSD3sign/outside-event-dashboard" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:none;">GitHub</a>
     <a href="https://www.linkedin.com/in/miguel-salazar-416703243" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:none;">LinkedIn</a>
   </span>
@@ -2084,7 +2085,7 @@ function askDeleteCmpSold(upc){
 function renderCmpCompareTable(){
   const allUpcs = new Set([...Object.keys(cmpOutboundSummary), ...Object.keys(cmpInboundSummary), ...Object.keys(cmpSoldManual)]);
   const tbody = document.getElementById('cmpCompareTbody');
-  let totOut=0, totIn=0, totSold=0, totDiff=0, errorCount=0;
+  let totOut=0, totIn=0, totSold=0, totDiff=0, errorCount=0, errorInboundUnits=0;
   const rowsData = [];
   [...allUpcs].sort().forEach(upc=>{
     const out = cmpOutboundSummary[upc] || 0;
@@ -2093,7 +2094,7 @@ function renderCmpCompareTable(){
     const diff = (inn + sold) - out;
     const isError = out === 0 && (inn > 0 || sold > 0);
     totOut+=out; totIn+=inn; totSold+=sold; totDiff+=diff;
-    if(isError) errorCount++;
+    if(isError){ errorCount++; errorInboundUnits += inn; } // sum of Inbound qty for Error UPCs (Outbound=0, Inbound>0)
     rowsData.push({upc,out,inn,sold,diff,isError});
   });
 
@@ -2135,11 +2136,15 @@ function renderCmpCompareTable(){
   document.getElementById('cmpCount').textContent = totSold + ' sold' + (displayRows.length !== rowsData.length ? ' · showing ' + displayRows.length + '/' + rowsData.length : '');
   document.getElementById('cmpTotals').textContent = `${totOut} / ${totIn} / ${totSold} / ${totDiff}`;
   const cmpErrorRow = document.getElementById('cmpErrorRow');
+  const cmpErrorUnitsRow = document.getElementById('cmpErrorUnitsRow');
   if(errorCount > 0){
     cmpErrorRow.style.display = '';
     cmpErrorRow.textContent = '⚠️ Error (' + errorCount + ') UPCs that were not scanned in Outbound but were scanned in Inbound';
+    cmpErrorUnitsRow.style.display = '';
+    cmpErrorUnitsRow.textContent = '📦 Total items: ' + errorInboundUnits + ' unit(s) scanned in Inbound without an Outbound record';
   } else {
     cmpErrorRow.style.display = 'none';
+    cmpErrorUnitsRow.style.display = 'none';
   }
   drawCmpChart(totOut, totIn, totSold, totDiff);
 }

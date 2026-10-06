@@ -6,14 +6,14 @@ https://msd3sign.github.io/outside-event-dashboard/
 
 ## Qué cambió en esta versión (v2.20)
 
-**Flujo principal Inbound — 4 líneas informativas bajo el Event Chart:**
+**Compare Excel — 4 líneas informativas bajo el Event Chart:**
 
-Debajo del gráfico (Event Chart) del flujo principal de **Inbound** ahora aparecen, con estilo coherente (texto monoespaciado, mismo color/énfasis que el resto de la app):
+Debajo del gráfico (Event Chart) de la sección **Compare Excel** ahora aparecen, con estilo coherente (texto monoespaciado, mismo color/énfasis que el resto de la app):
 
 1. `Inbound (n) + Sold (n) = Total Inbound (n)`
 2. `Outbound (n) − Total Inbound (n) = (resultado)`
 3. `Difference (n)` — coloreado igual que en la tabla (verde/rojo/gris según el signo)
-4. `Total Items not Scanned in Outbound but were scanned in Inbound (n)` — misma lógica del "Total items" agregado en v2.19 para Compare Excel, aplicada ahora al flujo Inbound.
+4. `Total Items not Scanned in Outbound but were scanned in Inbound (n)` — misma lógica del "Total items" agregado en v2.19, con los datos de Compare Excel.
 
 Todo se calcula reutilizando los totales (`totOut`, `totIn`, `totSold`, `totDiff`) que la app ya calcula en `renderCompareTable()` — no se duplicó ninguna lógica de cálculo — y se actualiza en vivo junto con el chart, cada vez que cambian los datos. No se modificó ninguna otra parte de la app (verificado con diff línea por línea contra v2.19).
 

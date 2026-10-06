@@ -4,6 +4,18 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 
 ---
 
+## v2.20
+**Inbound: fórmulas informativas debajo del Event Chart**
+
+- Debajo del **Event Chart** del flujo principal de **Inbound** se agregaron 4 líneas, con estilo coherente (`.chart-formulas`, texto monoespaciado):
+  1. `Inbound (n) + Sold (n) = Total Inbound (n)`
+  2. `Outbound (n) − Total Inbound (n) = (resultado)`
+  3. `Difference (n)` — coloreado con las mismas clases `diff-pos`/`diff-neg`/`diff-zero` ya usadas en la tabla.
+  4. `Total Items not Scanned in Outbound but were scanned in Inbound (n)` — misma lógica agregada en v2.19 para Compare Excel (suma de cantidades Inbound de los UPCs con Outbound=0 e Inbound>0), ahora también en el flujo Inbound.
+- Las 4 líneas reutilizan los totales (`totOut`, `totIn`, `totSold`, `totDiff`) ya calculados dentro de `renderCompareTable()` — no se duplicó lógica de cálculo; `errorInboundUnits` se acumula en el mismo `forEach` que ya marca las filas de error (mismo patrón que v2.19).
+- Se actualizan en vivo junto con el chart, dentro de la misma función que ya lo dibuja.
+- No se modificó ninguna otra parte de la app — verificado con diff línea por línea contra v2.19.
+
 ## v2.19
 **Compare Excel: total de unidades bajo el mensaje de Error**
 
@@ -131,7 +143,7 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
   - ✏️ Editar cantidad en línea (con validación de máximo permitido).
   - 🗑 Eliminar con confirmación.
 - Se agregó el número de versión visible junto al título de la app.
-- Se agregó **footer**: año de creación (2026), crédito al creador (Miguel Salazar) y enlace "Para sugerencias" que abre el correo del creador (generado en tiempo de ejecución para no dejarlo escrito en texto plano).
+- Se agregó **footer**: año de creación (2026), crédito al creador (Miguel Salazar) y enlace "Para sugerencias" que abre el correo.
 
 ## v2.5
 **Corrección de IDs de eventos duplicados**

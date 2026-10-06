@@ -4,79 +4,79 @@ https://msd3sign.github.io/outside-event-dashboard/
 
 # Outside Event Dashboard — v2.20
 
-## Qué cambió en esta versión (v2.20)
+## What changed in this version (v2.20)
 
-**Compare Excel e Inbound — 4 líneas informativas bajo el Event Chart:**
+**Compare Excel and Inbound — 4 info lines below the Event Chart:**
 
-Debajo del gráfico (Event Chart) de la sección **Compare Excel** y del flujo principal de **Inbound** ahora aparecen, con estilo coherente (texto monoespaciado, mismo color/énfasis que el resto de la app):
+Below the chart (Event Chart) of the **Compare Excel** section and the main **Inbound** flow, four lines now appear with consistent styling (monospaced text, same color/emphasis as the rest of the app):
 
 1. `Inbound (n) + Sold (n) = Total Inbound (n)`
-2. `Outbound (n) − Total Inbound (n) = (resultado)`
-3. `Difference (n)` — coloreado igual que en la tabla (verde/rojo/gris según el signo)
-4. `Total Items not Scanned in Outbound but were scanned in Inbound (n)` — misma lógica del "Total items" agregado en v2.19, con los datos de Compare Excel.
+2. `Outbound (n) − Total Inbound (n) = (result)`
+3. `Difference (n)` — colored like in the table (green/red/gray depending on the sign)
+4. `Total Items not Scanned in Outbound but were scanned in Inbound (n)` — same logic as the "Total items" added in v2.19, with Compare Excel data.
 
-Todo se calcula reutilizando los totales (`totOut`, `totIn`, `totSold`, `totDiff`) que la app ya calcula en `renderCompareTable()` — no se duplicó ninguna lógica de cálculo — y se actualiza en vivo junto con el chart, cada vez que cambian los datos. No se modificó ninguna otra parte de la app (verificado con diff línea por línea contra v2.19).
+Everything is computed by reusing the totals (`totOut`, `totIn`, `totSold`, `totDiff`) the app already calculates in `renderCompareTable()` — no calculation logic was duplicated — and updates live together with the chart whenever the data changes. No other part of the app was modified (verified with a line-by-line diff against v2.19).
 
 ---
 
-## Qué cambió en v2.19
+## What changed in v2.19
 
-**Sección Compare Excel — total de unidades bajo el mensaje de Error:**
+**Compare Excel section — unit total below the Error message:**
 
-Debajo del mensaje "⚠️ Error (n) UPCs that were not scanned in Outbound but were scanned in Inbound" ahora aparece una segunda línea con estilo coherente:
+Below the message "⚠️ Error (n) UPCs that were not scanned in Outbound but were scanned in Inbound", a second line now appears with consistent styling:
 
 ```
 📦 Total items: X unit(s) scanned in Inbound without an Outbound record
 ```
 
-Donde **X** es la suma de las cantidades Inbound de esos mismos UPCs (Outbound = 0, Inbound > 0) — es decir, total de **unidades**, no de UPCs distintos. Se calcula y se muestra/oculta junto con el mensaje de error, dentro de la misma función (`renderCmpCompareTable`), así que se recalcula en vivo cada vez que cambian los datos. No se modificó ninguna otra parte de la app (verificado con diff línea por línea contra v2.18).
+Where **X** is the sum of the Inbound quantities of those same UPCs (Outbound = 0, Inbound > 0) — that is, a total of **units**, not of distinct UPCs. It is calculated and shown/hidden together with the error message, inside the same function (`renderCmpCompareTable`), so it recalculates live whenever the data changes. No other part of the app was modified (verified with a line-by-line diff against v2.18).
 
 ---
 
-## Qué cambió en v2.18
+## What changed in v2.18
 
-**Sección Compare Excel — ahora guarda y reabre eventos, igual que Outbound/Inbound:**
+**Compare Excel section — now saves and reopens events, just like Outbound/Inbound:**
 
-1. Se agregaron los campos **Store #**, **Event Name** y **Date** al inicio de la sección, con el mismo estilo (`work-topbar`) que Outbound e Inbound.
-2. Se agregó el botón **"💾 Save Event"** junto a "Compare" y "Clear". Guarda las dos listas de UPCs pegadas (Outbound e Inbound, texto completo tal cual se pegó) más los datos del evento.
-3. El guardado usa **exactamente el mismo almacenamiento** que Outbound/Inbound (carpeta local / `window.storage` / `localStorage`, mismo archivo `.json` por evento, mismo índice de eventos). El evento guardado desde Compare Excel aparece en el listado general de eventos guardados.
-4. Se agregó un selector **"Switch Event"** (igual que en Outbound) para volver a abrir cualquier evento guardado directamente en Compare Excel — repone Store #/Event Name/Date y ambas listas pegadas. Si el evento fue creado originalmente en Outbound/Inbound (sin datos propios de Compare Excel), reconstruye las listas a partir de los UPCs escaneados.
-5. El botón "Clear" ahora también limpia los campos del evento y el selector, para evitar sobrescribir por accidente un evento cargado al presionar "Save Event" después de limpiar.
+1. Added the **Store #**, **Event Name**, and **Date** fields at the top of the section, with the same style (`work-topbar`) as Outbound and Inbound.
+2. Added the **"💾 Save Event"** button next to "Compare" and "Clear". It saves both pasted UPC lists (Outbound and Inbound, full text exactly as pasted) plus the event data.
+3. Saving uses **exactly the same storage** as Outbound/Inbound (local folder / `window.storage` / `localStorage`, same `.json` file per event, same event index). An event saved from Compare Excel shows up in the general saved-events list.
+4. Added a **"Switch Event"** selector (same as in Outbound) to reopen any saved event directly in Compare Excel — it restores Store #/Event Name/Date and both pasted lists. If the event was originally created in Outbound/Inbound (with no Compare Excel data of its own), it rebuilds the lists from the scanned UPCs.
+5. The "Clear" button now also clears the event fields and the selector, to avoid accidentally overwriting a loaded event by pressing "Save Event" after clearing.
 
-No se modificó nada más de la app.
-
----
-
-## Qué cambió en v2.17
-
-**Módulo Register Sales (Inbound y Compare Excel):** el campo **"Qty sold"** ahora viene precargado con el valor **1** apenas se selecciona un UPC en el combobox buscable. El usuario puede presionar directamente "✓ Register Sale" sin tener que escribir la cantidad — y sigue pudiendo cambiar el número manualmente si la venta fue de más de 1 unidad. No se tocó nada más de la app.
+Nothing else in the app was modified.
 
 ---
 
-## Qué cambió en v2.16
+## What changed in v2.17
 
-**Problema resuelto:** en la wifi de la empresa, la tablet abría la cámara y mostraba el UPC, pero nunca lo escaneaba. Causa: el navegador de la tablet no tiene `BarcodeDetector` nativo (típico en Safari/iPadOS), así que la app dependía de cargar la librería **ZXing** desde un CDN (`cdn.jsdelivr.net`) en el momento de abrir la cámara — y el firewall corporativo bloqueaba ese dominio, por lo que ZXing nunca llegaba a cargar.
-
-**Solución v2.16:** la librería ZXing (`@zxing/library` v0.20.0, build UMD `index.min.js`, 336 KB) ahora está **incrustada directamente dentro del `index.html`**, en un bloque `<script>` dentro del `<head>`. Ya no se descarga nada de internet para que el escaneo por cámara funcione — el archivo es 100% autónomo en ese aspecto, sin importar el firewall de la empresa.
-
-### Qué NO cambió (se mantuvo igual que v2.15)
-- **Chart.js** y **SheetJS/XLSX** (exportar a Excel) siguen usando la carga en cascada multi-CDN de la v2.15 (prueban varios orígenes en secuencia: `jsdelivr` → `unpkg` → `cdnjs`). No se incrustaron en esta versión porque el pedido específico de esta ronda fue solo ZXing.
-- El resto de la app (Outbound, Inbound, Compare Excel, filtros, combobox buscable, guardado en carpeta, etc.) no se tocó.
-
-### Verificación técnica realizada
-- El archivo `.js` subido se validó con `node --check` → sintaxis válida.
-- Se confirmó que expone `ZXing.BrowserMultiFormatReader` (la clase que usa el código de la app).
-- Se verificó que el archivo no contiene la cadena `</script>` literal (que rompería el HTML si no se escapara).
-- Se validó la sintaxis completa del HTML resultante (ambos bloques `<script>`: la librería incrustada y la lógica de la app).
-
-### Cómo probar que ya no depende de internet para la cámara
-1. Abra `index.html` en una tablet/dispositivo con `BarcodeDetector` no soportado (ej. Safari/iPad).
-2. Desconecte el wifi o actívelo en modo avión.
-3. Presione el botón 📷 para escanear — la cámara debe abrir y detectar el código igual que con internet.
-   (El resto de la UI, como exportar a Excel o ver el gráfico, seguirá necesitando internet mientras esas dos librerías no estén también incrustadas.)
-
-### Tamaño del archivo
-El HTML pasó de ~96 KB a **~428 KB** por la librería incrustada. Sigue siendo un solo archivo portátil, sin cambios en cómo se abre o se comparte.
+**Register Sales module (Inbound and Compare Excel):** the **"Qty sold"** field now comes pre-filled with **1** as soon as a UPC is selected in the searchable combobox. The user can press "✓ Register Sale" directly without typing the quantity — and can still change the number manually if the sale was for more than 1 unit. Nothing else in the app was touched.
 
 ---
-*Ver `CHANGELOG.md` del proyecto para el historial completo de versiones.*
+
+## What changed in v2.16
+
+**Problem fixed:** on the company wifi, the tablet opened the camera and showed the UPC, but never scanned it. Cause: the tablet's browser has no native `BarcodeDetector` (typical on Safari/iPadOS), so the app depended on loading the **ZXing** library from a CDN (`cdn.jsdelivr.net`) at the moment the camera opened — and the corporate firewall blocked that domain, so ZXing never loaded.
+
+**v2.16 fix:** the ZXing library (`@zxing/library` v0.20.0, UMD build `index.min.js`, 336 KB) is now **embedded directly inside `index.html`**, in a `<script>` block within `<head>`. Nothing is downloaded from the internet for camera scanning to work — the file is 100% self-contained in that regard, regardless of the company firewall.
+
+### What did NOT change (kept as in v2.15)
+- **Chart.js** and **SheetJS/XLSX** (Excel export) still use the v2.15 multi-CDN cascade loading (they try several origins in sequence: `jsdelivr` → `unpkg` → `cdnjs`). They were not embedded in this version because this round's specific request was ZXing only.
+- The rest of the app (Outbound, Inbound, Compare Excel, filters, searchable combobox, folder saving, etc.) was not touched.
+
+### Technical verification performed
+- The uploaded `.js` file was validated with `node --check` → valid syntax.
+- Confirmed it exposes `ZXing.BrowserMultiFormatReader` (the class the app's code uses).
+- Verified the file does not contain the literal string `</script>` (which would break the HTML if not escaped).
+- Validated the full syntax of the resulting HTML (both `<script>` blocks: the embedded library and the app logic).
+
+### How to verify it no longer depends on the internet for the camera
+1. Open `index.html` on a tablet/device without `BarcodeDetector` support (e.g., Safari/iPad).
+2. Disconnect wifi or turn on airplane mode.
+3. Press the 📷 scan button — the camera should open and detect the code just like with internet.
+   (The rest of the UI, like Excel export or viewing the chart, will still need internet until those two libraries are embedded as well.)
+
+### File size
+The HTML went from ~96 KB to **~428 KB** due to the embedded library. It remains a single portable file, with no changes to how it is opened or shared.
+
+---
+*See the project's `CHANGELOG.md` for the full version history.*

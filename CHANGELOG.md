@@ -5,15 +5,15 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 ---
 
 ## v2.20
-**Compare Excel: fórmulas informativas debajo del Event Chart** (corrección: inicialmente se colocaron en el flujo Inbound; se reubicaron a Compare Excel en la misma v2.20)
+**Fórmulas informativas debajo del Event Chart — en Inbound y en Compare Excel**
 
-- Debajo del **Event Chart** de la sección **Compare Excel** se agregaron 4 líneas, con estilo coherente (`.chart-formulas`, texto monoespaciado):
+- Debajo del **Event Chart** de la sección **Compare Excel** y del flujo principal de **Inbound** se muestran las mismas 4 líneas, con estilo coherente (`.chart-formulas`, texto monoespaciado):
   1. `Inbound (n) + Sold (n) = Total Inbound (n)`
   2. `Outbound (n) − Total Inbound (n) = (resultado)`
   3. `Difference (n)` — coloreado con las mismas clases `diff-pos`/`diff-neg`/`diff-zero` ya usadas en la tabla.
-  4. `Total Items not Scanned in Outbound but were scanned in Inbound (n)` — misma lógica agregada en v2.19 (suma de cantidades Inbound de los UPCs con Outbound=0 e Inbound>0), con los datos de Compare Excel (`cmpOutboundSummary`/`cmpInboundSummary`/`cmpSoldManual`).
-- Las 4 líneas reutilizan los totales (`totOut`, `totIn`, `totSold`) ya calculados dentro de `renderCmpCompareTable()` — no se duplicó lógica de cálculo.
-- Se actualizan en vivo junto con el chart, dentro de la misma función que ya lo dibuja.
+  4. `Total Items not Scanned in Outbound but were scanned in Inbound (n)` — suma de cantidades Inbound de los UPCs con Outbound=0 e Inbound>0.
+- En Compare Excel usan los datos de `renderCmpCompareTable()` (`cmpOutboundSummary`/`cmpInboundSummary`/`cmpSoldManual`); en Inbound usan los de `renderCompareTable()` (`outboundList`/`inboundList`/`soldManual`). No se duplicó lógica de cálculo.
+- Se actualizan en vivo junto con cada chart, dentro de la misma función que ya lo dibuja.
 - No se modificó ninguna otra parte de la app.
 
 ## v2.19

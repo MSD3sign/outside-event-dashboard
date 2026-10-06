@@ -1,3 +1,7 @@
+The app is live here:
+
+https://msd3sign.github.io/outside-event-dashboard/
+
 # Outside Event Dashboard — v2.20
 
 ## Qué cambió en esta versión (v2.20)

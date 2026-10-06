@@ -5,16 +5,16 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 ---
 
 ## v2.20
-**Inbound: fórmulas informativas debajo del Event Chart**
+**Compare Excel: fórmulas informativas debajo del Event Chart** (corrección: inicialmente se colocaron en el flujo Inbound; se reubicaron a Compare Excel en la misma v2.20)
 
-- Debajo del **Event Chart** del flujo principal de **Inbound** se agregaron 4 líneas, con estilo coherente (`.chart-formulas`, texto monoespaciado):
+- Debajo del **Event Chart** de la sección **Compare Excel** se agregaron 4 líneas, con estilo coherente (`.chart-formulas`, texto monoespaciado):
   1. `Inbound (n) + Sold (n) = Total Inbound (n)`
   2. `Outbound (n) − Total Inbound (n) = (resultado)`
   3. `Difference (n)` — coloreado con las mismas clases `diff-pos`/`diff-neg`/`diff-zero` ya usadas en la tabla.
-  4. `Total Items not Scanned in Outbound but were scanned in Inbound (n)` — misma lógica agregada en v2.19 para Compare Excel (suma de cantidades Inbound de los UPCs con Outbound=0 e Inbound>0), ahora también en el flujo Inbound.
-- Las 4 líneas reutilizan los totales (`totOut`, `totIn`, `totSold`, `totDiff`) ya calculados dentro de `renderCompareTable()` — no se duplicó lógica de cálculo; `errorInboundUnits` se acumula en el mismo `forEach` que ya marca las filas de error (mismo patrón que v2.19).
+  4. `Total Items not Scanned in Outbound but were scanned in Inbound (n)` — misma lógica agregada en v2.19 (suma de cantidades Inbound de los UPCs con Outbound=0 e Inbound>0), con los datos de Compare Excel (`cmpOutboundSummary`/`cmpInboundSummary`/`cmpSoldManual`).
+- Las 4 líneas reutilizan los totales (`totOut`, `totIn`, `totSold`) ya calculados dentro de `renderCmpCompareTable()` — no se duplicó lógica de cálculo.
 - Se actualizan en vivo junto con el chart, dentro de la misma función que ya lo dibuja.
-- No se modificó ninguna otra parte de la app — verificado con diff línea por línea contra v2.19.
+- No se modificó ninguna otra parte de la app.
 
 ## v2.19
 **Compare Excel: total de unidades bajo el mensaje de Error**

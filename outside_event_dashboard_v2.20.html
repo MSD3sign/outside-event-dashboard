@@ -620,12 +620,6 @@
         <div class="panel">
           <div class="panel-header"><span class="panel-title">Event Chart</span></div>
           <div class="chart-wrap"><canvas id="ibChart" height="220"></canvas></div>
-          <div class="chart-formulas" id="ibChartFormulas">
-            <div class="cf-line" id="ibFormulaSum"></div>
-            <div class="cf-line" id="ibFormulaSubtract"></div>
-            <div class="cf-line" id="ibFormulaDiff"></div>
-            <div class="cf-line" id="ibFormulaErrorUnits"></div>
-          </div>
         </div>
       </div>
     </div>
@@ -736,6 +730,12 @@
       <div class="panel">
         <div class="panel-header"><span class="panel-title">Event Chart</span></div>
         <div class="chart-wrap"><canvas id="cmpChart" height="220"></canvas></div>
+        <div class="chart-formulas" id="cmpChartFormulas">
+          <div class="cf-line" id="cmpFormulaSum"></div>
+          <div class="cf-line" id="cmpFormulaSubtract"></div>
+          <div class="cf-line" id="cmpFormulaDiff"></div>
+          <div class="cf-line" id="cmpFormulaErrorUnits"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1643,18 +1643,6 @@ function renderCompareTable(){
     ibErrorRow.style.display = 'none';
   }
 
-  // Formulas shown below the Event Chart — reuse the totals already computed above.
-  const totalInbound = totIn + totSold;
-  const subtractResult = totOut - totalInbound;
-  document.getElementById('ibFormulaSum').textContent =
-    `Inbound (${totIn}) + Sold (${totSold}) = Total Inbound (${totalInbound})`;
-  document.getElementById('ibFormulaSubtract').textContent =
-    `Outbound (${totOut}) − Total Inbound (${totalInbound}) = ${subtractResult}`;
-  const diffFormulaEl = document.getElementById('ibFormulaDiff');
-  diffFormulaEl.textContent = `Difference (${subtractResult})`;
-  diffFormulaEl.className = 'cf-line ' + (subtractResult > 0 ? 'diff-pos' : (subtractResult < 0 ? 'diff-neg' : 'diff-zero'));
-  document.getElementById('ibFormulaErrorUnits').textContent =
-    `Total Items not Scanned in Outbound but were scanned in Inbound (${errorInboundUnits})`;
 
   drawChart(totOut, totIn, totSold, totDiff);
 }
@@ -2171,6 +2159,19 @@ function renderCmpCompareTable(){
     cmpErrorRow.style.display = 'none';
     cmpErrorUnitsRow.style.display = 'none';
   }
+  // Formulas shown below the Compare Excel Event Chart — reuse the totals already computed above.
+  const cmpTotalInbound = totIn + totSold;
+  const cmpSubtractResult = totOut - cmpTotalInbound;
+  document.getElementById('cmpFormulaSum').textContent =
+    `Inbound (${totIn}) + Sold (${totSold}) = Total Inbound (${cmpTotalInbound})`;
+  document.getElementById('cmpFormulaSubtract').textContent =
+    `Outbound (${totOut}) − Total Inbound (${cmpTotalInbound}) = ${cmpSubtractResult}`;
+  const cmpDiffFormulaEl = document.getElementById('cmpFormulaDiff');
+  cmpDiffFormulaEl.textContent = `Difference (${cmpSubtractResult})`;
+  cmpDiffFormulaEl.className = 'cf-line ' + (cmpSubtractResult > 0 ? 'diff-pos' : (cmpSubtractResult < 0 ? 'diff-neg' : 'diff-zero'));
+  document.getElementById('cmpFormulaErrorUnits').textContent =
+    `Total Items not Scanned in Outbound but were scanned in Inbound (${errorInboundUnits})`;
+
   drawCmpChart(totOut, totIn, totSold, totDiff);
 }
 function clearCmpCompareFilters(){

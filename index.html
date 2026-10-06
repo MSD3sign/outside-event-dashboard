@@ -261,6 +261,11 @@
     padding:8px 14px;background:rgba(229,72,77,.1);color:var(--danger);
     font-size:.78rem;font-weight:700;text-align:center;border-top:1px solid var(--border);
   }
+  .chart-formulas{
+    padding:12px 18px 16px;border-top:1px solid var(--border);
+    background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:7px;
+  }
+  .chart-formulas .cf-line{font-family:var(--font-mono);font-size:.8rem;color:var(--text)}
 
   .save-bar{
     padding:15px 18px;border-top:1px solid var(--border);background:var(--surface2);
@@ -393,7 +398,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.19</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.20</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -615,6 +620,12 @@
         <div class="panel">
           <div class="panel-header"><span class="panel-title">Event Chart</span></div>
           <div class="chart-wrap"><canvas id="ibChart" height="220"></canvas></div>
+          <div class="chart-formulas" id="ibChartFormulas">
+            <div class="cf-line" id="ibFormulaSum"></div>
+            <div class="cf-line" id="ibFormulaSubtract"></div>
+            <div class="cf-line" id="ibFormulaDiff"></div>
+            <div class="cf-line" id="ibFormulaErrorUnits"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1578,7 +1589,7 @@ function askDeleteSold(upc){
 function renderCompareTable(){
   const allUpcs = new Set([...Object.keys(inboundOutboundSummary), ...Object.keys(inboundScanSummary), ...Object.keys(soldManual)]);
   const tbody = document.getElementById('ibCompareTbody');
-  let totOut=0, totIn=0, totSold=0, totDiff=0, errorCount=0;
+  let totOut=0, totIn=0, totSold=0, totDiff=0, errorCount=0, errorInboundUnits=0;
   const rowsData = [];
   [...allUpcs].sort().forEach(upc=>{
     const out = inboundOutboundSummary[upc] || 0;
@@ -1587,7 +1598,7 @@ function renderCompareTable(){
     const diff = (inn + sold) - out; // Difference = (Inbound + Sold) - Outbound
     const isError = out === 0 && (inn > 0 || sold > 0); // inconsistent data: nothing went out but there's Inbound/Sold
     totOut+=out; totIn+=inn; totSold+=sold; totDiff+=diff;
-    if(isError) errorCount++;
+    if(isError){ errorCount++; errorInboundUnits += inn; } // sum of Inbound qty for Error UPCs (Outbound=0, Inbound>0)
     rowsData.push({upc,out,inn,sold,diff,isError});
   });
 
@@ -1631,6 +1642,20 @@ function renderCompareTable(){
   } else {
     ibErrorRow.style.display = 'none';
   }
+
+  // Formulas shown below the Event Chart — reuse the totals already computed above.
+  const totalInbound = totIn + totSold;
+  const subtractResult = totOut - totalInbound;
+  document.getElementById('ibFormulaSum').textContent =
+    `Inbound (${totIn}) + Sold (${totSold}) = Total Inbound (${totalInbound})`;
+  document.getElementById('ibFormulaSubtract').textContent =
+    `Outbound (${totOut}) − Total Inbound (${totalInbound}) = ${subtractResult}`;
+  const diffFormulaEl = document.getElementById('ibFormulaDiff');
+  diffFormulaEl.textContent = `Difference (${subtractResult})`;
+  diffFormulaEl.className = 'cf-line ' + (subtractResult > 0 ? 'diff-pos' : (subtractResult < 0 ? 'diff-neg' : 'diff-zero'));
+  document.getElementById('ibFormulaErrorUnits').textContent =
+    `Total Items not Scanned in Outbound but were scanned in Inbound (${errorInboundUnits})`;
+
   drawChart(totOut, totIn, totSold, totDiff);
 }
 function clearIbCompareFilters(){
@@ -2298,6 +2323,7 @@ function closeCameraScan(){
   camTarget = null;
 }
 document.getElementById('camOverlay').addEventListener('click', function(e){ if(e.target === this) closeCameraScan(); });
+
 
 </script>
 </body>

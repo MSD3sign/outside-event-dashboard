@@ -4,6 +4,15 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 
 ---
 
+## v2.19
+**Compare Excel: total de unidades bajo el mensaje de Error**
+
+- Debajo del mensaje "⚠️ Error (n) UPCs that were not scanned in Outbound but were scanned in Inbound" se agregó una segunda línea, con el mismo estilo (`error-count-row`): `📦 Total items: X unit(s) scanned in Inbound without an Outbound record`.
+- **X** = suma de las cantidades Inbound de los mismos UPCs que cuenta ese Error (Outbound = 0, Inbound > 0) — total de **unidades**, no de UPCs distintos.
+- Se calcula dentro de la misma función (`renderCmpCompareTable`) que ya arma el mensaje de Error (n), acumulando `inn` sobre las filas marcadas como error en el mismo `forEach` — se recalcula en vivo junto con el resto de la tabla.
+- Se muestra/oculta en conjunto con el mensaje de Error (n): visible solo cuando `errorCount > 0`.
+- No se modificó ninguna otra parte de la app — verificado con diff línea por línea contra v2.18 (9 líneas de diferencia en total: 2 por el bump de versión, 7 por esta mejora).
+
 ## v2.18
 **Compare Excel: identificación de evento + guardar/reabrir**
 
@@ -122,7 +131,7 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
   - ✏️ Editar cantidad en línea (con validación de máximo permitido).
   - 🗑 Eliminar con confirmación.
 - Se agregó el número de versión visible junto al título de la app.
-- Se agregó **footer**: año de creación (2026), crédito al creador (Miguel Salazar) y enlace "Para sugerencias" que abre el correo.
+- Se agregó **footer**: año de creación (2026), crédito al creador (Miguel Salazar) y enlace "Para sugerencias" que abre el correo del creador (generado en tiempo de ejecución para no dejarlo escrito en texto plano).
 
 ## v2.5
 **Corrección de IDs de eventos duplicados**

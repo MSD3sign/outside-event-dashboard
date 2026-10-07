@@ -11,7 +11,15 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 - Las diferencias negativas (shortage) siguen en rojo como antes.
 - Para el total de Difference, el valor de Error(n) se trata como positivo y se suma (comportamiento actual conservado).
 - `Only Error` muestra ambos tipos de error; las negativas no entran en `Only Error` (siguen solo en `Only negative Difference`).
-- El cambio reutiliza el `diff`/`isError` por UPC ya calculado (`renderCmpCompareTable`); diff línea por línea contra v2.21: solo el label de versión y las 2 líneas de `diffClass`/`diffLabel` en Compare Excel.
+- El cambio reutiliza el `diff`/`isError` por UPC ya calculado (`renderCmpCompareTable`); diff línea por línea contra v2.21: solo el label de versión y las 2 líneas de `diffClass`/`diffLabel` en Compare Excel.## v2.24
+**Inbound y Compare Excel: checkbox "Only non-zero Difference"**
+
+- Nuevo checkbox **Only non-zero Difference** en ambas tablas de comparación (Inbound y Compare Excel), desmarcado por defecto.
+- Al marcarlo, la tabla muestra solo las filas con Difference distinto de cero.
+- Se combina con los filtros existentes con el mismo patrón AND: en Inbound con "Only negative Difference"; en Compare Excel con "Only negative Difference" y "Only Error".
+- "Clear filters" también reinicia los nuevos checkboxes.
+- Cambio mínimo verificado con diff contra v2.23: solo el label de versión, los 2 checkboxes, el filtro `r.diff !== 0` en ambas tablas, el mensaje de filtros activos y el reset.
+
 ## v2.23
 **Compare Excel: checkbox "Allow oversell" en Register Sales**
 

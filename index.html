@@ -399,7 +399,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.26</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.27</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -712,7 +712,7 @@
           <div class="list-wrap" style="max-height:260px">
             <div class="empty" id="cmpSoldEmpty" style="padding:24px 18px"><span class="ic">🧾</span>No sales registered yet.</div>
             <table id="cmpSoldTable" style="display:none">
-              <thead><tr><th>UPC</th><th>Qty Sold</th><th style="width:110px">Actions</th></tr></thead>
+              <thead><tr><th>UPC</th><th>Qty Sold</th><th style="width:110px">Actions <button class="btn-del" onclick="askDeleteAllCmpSold()" title="Delete all sales">🗑</button></th></tr></thead>
               <tbody id="cmpSoldTbody"></tbody>
             </table>
           </div>
@@ -1806,6 +1806,13 @@ function confirmDelete(){
     populateCmpSoldSelect();
     renderCmpSoldList();
     renderCmpCompareTable();
+  } else if(pendingDelete.which==='cmpsoldall'){
+    cmpSoldManual = {};
+    editingCmpSoldUpc = null;
+    selectedCmpSoldUpc = null;
+    populateCmpSoldSelect();
+    renderCmpSoldList();
+    renderCmpCompareTable();
   }
   closeDeleteModal();
   showToast('Deleted.', 'info');
@@ -2195,6 +2202,15 @@ function askDeleteCmpSold(upc){
   pendingDelete = {which:'cmpsold', upc};
   document.getElementById('deleteModalMsg').innerHTML =
     `Are you sure you want to delete the registered sale of <strong>${escHtml(upc)}</strong> (${cmpSoldManual[upc]||0} unit(s))?<br/>This action cannot be undone.`;
+  document.getElementById('deleteModal').classList.add('open');
+}
+
+function askDeleteAllCmpSold(){
+  const n = Object.keys(cmpSoldManual).length;
+  if(!n){ showToast('No sales to delete.', 'info'); return; }
+  pendingDelete = {which:'cmpsoldall'};
+  document.getElementById('deleteModalMsg').innerHTML =
+    `⚠️ Are you sure you want to delete <strong>all</strong> registered sales (${n} UPC${n===1?'':'s'})?<br/>This action cannot be undone.`;
   document.getElementById('deleteModal').classList.add('open');
 }
 

@@ -28,6 +28,7 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 - Los desconocidos guardados aparecen en la comparación como Outbound=0 con la etiqueta "N Product not scanned at outbound".
 - Solo Compare Excel; Inbound intacto.
 - Corrección propia (reporte de Mig): el textarea del modo Paste list no usaba el tema del proyecto; ahora usa la clase `.cmp-textarea` existente (igual que los textareas de Outbound/Inbound).
+- Ajustes visuales aprobados por Mig: estilo `.inline-note.warning` en rojo (`--danger`) para el aviso de UPCs fuera del Outbound; tabs Single/Paste list con estado activo morado (`cmp-active`) como la navegación de Compare.
 
 ## v2.25
 **Compare Excel: modo "Paste list" en REGISTER SALES**

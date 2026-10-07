@@ -2,7 +2,17 @@ The app is live here:
 
 https://msd3sign.github.io/outside-event-dashboard/
 
-# Outside Event Dashboard — v2.25
+# Outside Event Dashboard — v2.26
+
+## What changed in this version (v2.26)
+
+- Added outbound confirmation support for Compare Excel Register Sales → Paste list mode.
+- Paste list now shows a live warning when unique UPCs are not found in Outbound.
+- Saving a Paste list with unknown UPCs asks for confirmation before processing.
+- Users can choose to save unknown UPCs anyway or keep them in the textarea for later review.
+- Existing validation rules, Allow oversell behavior, comparison rendering, and sales accumulation remain unchanged.
+
+---
 
 ## What changed in this version (v2.25)
 

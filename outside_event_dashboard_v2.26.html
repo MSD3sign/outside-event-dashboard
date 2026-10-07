@@ -283,6 +283,7 @@
   .btn-ghost:hover{border-color:var(--muted2);color:var(--text)}
 
   .inline-note{font-size:.73rem;color:var(--muted);padding:8px 18px;border-top:1px solid var(--border);background:rgba(255,255,255,.02);line-height:1.5}
+  .inline-note.warning{color:var(--danger);font-weight:600}
 
   /* Inbound-specific */
   .filter-bar{display:flex;gap:10px;padding:15px 18px;border-bottom:1px solid var(--border)}
@@ -685,8 +686,8 @@
             <span class="panel-title">Register Sales</span>
           </div>
           <div class="segmented" id="cmpSalesRegisterMode" style="margin-bottom:12px">
-            <button class="active" id="cmpSalesSingleTab" onclick="setCmpSalesMode('single')">Single</button>
-            <button id="cmpSalesPasteTab" onclick="setCmpSalesMode('paste')">Paste list</button>
+            <button class="active cmp-active" id="cmpSalesSingleTab" onclick="setCmpSalesMode('single')">Single</button>
+            <button class="cmp-active" id="cmpSalesPasteTab" onclick="setCmpSalesMode('paste')">Paste list</button>
           </div>
           <div class="sold-block" id="cmpSalesSinglePanel">
             <div class="combo-wrap">

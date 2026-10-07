@@ -2,7 +2,18 @@ The app is live here:
 
 https://msd3sign.github.io/outside-event-dashboard/
 
-# Outside Event Dashboard — v2.23
+# Outside Event Dashboard — v2.24
+
+## What changed in this version (v2.24)
+
+**Inbound and Compare Excel — "Only non-zero Difference" checkbox:**
+
+- Added an **Only non-zero Difference** checkbox to both comparison tables (Inbound and Compare Excel), unchecked by default.
+- When checked, the table shows only rows with Difference ≠ 0.
+- It combines with the existing filters using the same AND pattern: in Inbound with "Only negative Difference"; in Compare Excel with "Only negative Difference" and "Only Error".
+- "Clear filters" also resets the new checkboxes.
+
+---
 
 ## What changed in this version (v2.23)
 

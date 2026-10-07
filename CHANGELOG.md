@@ -19,6 +19,15 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 - Se combina con los filtros existentes con el mismo patrón AND: en Inbound con "Only negative Difference"; en Compare Excel con "Only negative Difference" y "Only Error".
 - "Clear filters" también reinicia los nuevos checkboxes.
 - Cambio mínimo verificado con diff contra v2.23: solo el label de versión, los 2 checkboxes, el filtro `r.diff !== 0` en ambas tablas, el mensaje de filtros activos y el reset.
+## v2.25
+**Compare Excel: modo "Paste list" en REGISTER SALES**
+
+- Nuevo control de tabs segmentado en REGISTER SALES de Compare Excel: "Single" (por defecto) y "Paste list".
+- El tab "Paste list" tiene un textarea ("Paste UPC list, one per line…") y botón "Save sales": cada línea no vacía cuenta como 1 venta del UPC.
+- "Save sales" acumula en las ventas ya registradas (suma, no reemplaza), reutiliza las validaciones existentes (UPC válido, cantidad disponible y "Allow oversell"), actualiza la tabla, limpia el textarea y muestra un toast resumen.
+- El checkbox "Allow oversell" quedó fuera de los tabs y aplica a ambos modos.
+- Corrección propia: el split de líneas venía con regex escapada (`/\\r?\\n/`); se corrigió a `/\r?\n/`.
+- Solo Compare Excel; Inbound intacto.
 
 ## v2.23
 **Compare Excel: checkbox "Allow oversell" en Register Sales**

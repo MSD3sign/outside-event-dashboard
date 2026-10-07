@@ -2,7 +2,17 @@ The app is live here:
 
 https://msd3sign.github.io/outside-event-dashboard/
 
-# Outside Event Dashboard — v2.24
+# Outside Event Dashboard — v2.25
+
+## What changed in this version (v2.25)
+
+- Added a segmented Single / Paste list mode selector to REGISTER SALES in the Compare Excel panel.
+- Added bulk UPC sales registration through a multiline paste box.
+- Paste list mode registers one sale per non-empty UPC line and accumulates into existing registered sales.
+- Reuses the existing UPC validation, remaining availability checks, oversell setting, toast notifications, and comparison refresh flow.
+- The Allow oversell option remains visible outside the tabs and applies to both registration modes.
+
+---
 
 ## What changed in this version (v2.24)
 

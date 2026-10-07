@@ -18,7 +18,16 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 - Al marcarlo, la tabla muestra solo las filas con Difference distinto de cero.
 - Se combina con los filtros existentes con el mismo patrón AND: en Inbound con "Only negative Difference"; en Compare Excel con "Only negative Difference" y "Only Error".
 - "Clear filters" también reinicia los nuevos checkboxes.
-- Cambio mínimo verificado con diff contra v2.23: solo el label de versión, los 2 checkboxes, el filtro `r.diff !== 0` en ambas tablas, el mensaje de filtros activos y el reset.
+- Cambio mínimo verificado con diff contra v2.23: solo el label de versión, los 2 checkboxes, el filtro `r.diff !== 0` en ambas tablas, el mensaje de filtros activos y el reset.## v2.26
+**Compare Excel: confirmación para UPCs fuera del Outbound en modo "Paste list"**
+
+- Nueva línea informativa fija bajo el textarea que se actualiza al escribir: muestra cuántos UPCs únicos de la lista no están en el Outbound.
+- Al dar "Save sales" con UPCs desconocidos, pide confirmación: "¿guardarlos también?".
+- Si se dice NO: se guardan los válidos y el textarea queda solo con los desconocidos (para revisarlos).
+- Si se dice SÍ: se guarda todo sin restricción y el textarea se limpia por completo.
+- Los desconocidos guardados aparecen en la comparación como Outbound=0 con la etiqueta "N Product not scanned at outbound".
+- Solo Compare Excel; Inbound intacto.
+
 ## v2.25
 **Compare Excel: modo "Paste list" en REGISTER SALES**
 

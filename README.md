@@ -2,7 +2,18 @@ The app is live here:
 
 https://msd3sign.github.io/outside-event-dashboard/
 
-# Outside Event Dashboard — v2.26
+# Outside Event Dashboard — v2.27
+
+## What changed in this version (v2.27)
+
+**Compare Excel — "Delete all sales" button in Registered Sales:**
+
+- Added a trash icon next to the "Actions" header of the Registered Sales table.
+- Pressing it opens the existing "⚠️ Confirm Deletion" modal asking whether to delete all registered sales (Cancel/Delete).
+- Confirming clears all sales, refreshes the sales list and the comparison table.
+- Reuses the existing delete-modal flow; Inbound not modified.
+
+---
 
 ## What changed in this version (v2.26)
 

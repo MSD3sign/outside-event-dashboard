@@ -12,6 +12,14 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 - Para el total de Difference, el valor de Error(n) se trata como positivo y se suma (comportamiento actual conservado).
 - `Only Error` muestra ambos tipos de error; las negativas no entran en `Only Error` (siguen solo en `Only negative Difference`).
 - El cambio reutiliza el `diff`/`isError` por UPC ya calculado (`renderCmpCompareTable`); diff línea por línea contra v2.21: solo el label de versión y las 2 líneas de `diffClass`/`diffLabel` en Compare Excel.
+## v2.23
+**Compare Excel: checkbox "Allow oversell" en Register Sales**
+
+- Nuevo checkbox **Allow oversell** en el Register Sales de Compare Excel, desmarcado por defecto.
+- Al marcarlo, se elimina la validación que impide vender más que la cantidad disponible (Outbound − Inbound − ventas ya registradas). Ejemplo: con Outbound ×2 se puede registrar una venta de ×3.
+- Con el checkbox desmarcado, la validación actual sigue funcionando igual que siempre.
+- Solo aplica a Compare Excel; el Register Sales de Inbound no se tocó.
+- Cambio mínimo verificado con diff contra v2.22: solo el label de versión, el checkbox y la condición en `addCmpSoldManual()`.
 
 ## v2.21
 **Compare Excel: "Only Error" incluye diferencias positivas (over-return)**

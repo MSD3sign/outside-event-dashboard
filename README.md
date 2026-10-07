@@ -2,7 +2,18 @@ The app is live here:
 
 https://msd3sign.github.io/outside-event-dashboard/
 
-# Outside Event Dashboard — v2.20
+# Outside Event Dashboard — v2.21
+
+## What changed in this version (v2.21)
+
+**Compare Excel — "Only Error" now includes positive differences (over-return):**
+
+- The **Only Error** filter now also includes POSITIVE differences: UPCs where there was Outbound but Inbound + Sold > Outbound (over-return / excess inventory). Those rows count as errors just like the negative ones.
+- The error counter includes them as well.
+- **Only negative Difference** still shows only negative differences (shortage).
+- The classification reuses the already-computed per-UPC diff — no calculation logic was duplicated and no other part of the app was modified (verified with a line-by-line diff against v2.20).
+
+---
 
 ## What changed in this version (v2.20)
 

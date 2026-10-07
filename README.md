@@ -2,7 +2,17 @@ The app is live here:
 
 https://msd3sign.github.io/outside-event-dashboard/
 
-# Outside Event Dashboard — v2.21
+# Outside Event Dashboard — v2.22
+
+## What changed in this version (v2.22)
+
+- Updated Compare Excel Difference error labels to display the quantity first and use green error labels.
+- Changed outbound-missing scan errors to display as `N Product not scanned at outbound`.
+- Changed over-return errors to display as `N Unscanned difference`.
+- Kept shortage differences unchanged: negative Difference values continue to display in red and remain available only through **Only negative Difference**.
+- Kept **Only Error** behavior limited to the existing error classification flow and reused the existing UPC difference values.
+
+---
 
 ## What changed in this version (v2.21)
 

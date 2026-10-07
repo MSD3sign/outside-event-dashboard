@@ -27,6 +27,7 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 - Si se dice SÍ: se guarda todo sin restricción y el textarea se limpia por completo.
 - Los desconocidos guardados aparecen en la comparación como Outbound=0 con la etiqueta "N Product not scanned at outbound".
 - Solo Compare Excel; Inbound intacto.
+- Corrección propia (reporte de Mig): el textarea del modo Paste list no usaba el tema del proyecto; ahora usa la clase `.cmp-textarea` existente (igual que los textareas de Outbound/Inbound).
 
 ## v2.25
 **Compare Excel: modo "Paste list" en REGISTER SALES**

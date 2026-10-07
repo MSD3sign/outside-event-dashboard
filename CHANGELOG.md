@@ -3,6 +3,13 @@
 Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos externos (Outbound / Inbound).
 
 ---
+## v2.21
+**Compare Excel: "Only Error" incluye diferencias positivas (over-return)**
+
+- El filtro **Only Error** ahora también incluye las diferencias POSITIVAS: UPCs donde hubo Outbound pero Inbound + Sold > Outbound (mercancía de más / over-return). Esas filas cuentan como error igual que las negativas.
+- El contador de errores también las incluye.
+- **Only negative Difference** sigue mostrando solo diferencias negativas (shortage).
+- El cambio reutiliza el `diff` por UPC ya calculado (`renderCmpCompareTable`); no se duplicó lógica ni se tocó ninguna otra parte de la app (diff línea por línea contra v2.20: solo el label de versión y la clasificación `isError`).
 
 ## v2.20
 **Fórmulas informativas debajo del Event Chart — en Inbound y en Compare Excel**

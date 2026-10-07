@@ -2140,7 +2140,10 @@ function saveCmpSoldPasteList(){
   populateCmpSoldSelect();
   renderCmpSoldList();
   renderCmpCompareTable();
-  showToast(registered + ' sales registered, ' + invalid + ' invalid skipped, ' + exceeded + ' exceeded available', registered ? 'success' : 'info');
+  let toastMsg = registered ? `✅ ${registered} sale(s) registered.` : `⚠️ No sales registered.`;
+  if(invalid) toastMsg += ` ${invalid} invalid UPC(s) skipped.`;
+  if(exceeded) toastMsg += ` ${exceeded} exceeded available quantity.`;
+  showToast(toastMsg, registered ? 'success' : 'error');
 }
 function addCmpSoldManual(){
   const upc = selectedCmpSoldUpc || document.getElementById('cmpSoldUpcSearch').value.trim();

@@ -398,7 +398,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.22</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.23</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -690,6 +690,7 @@
             </div>
             <input type="number" id="cmpSoldQtyInput" placeholder="Qty sold" min="1" />
             <button onclick="addCmpSoldManual()">✓ Register Sale</button>
+            <label class="filter-check"><input type="checkbox" id="cmpAllowOversell" /> Allow oversell</label>
           </div>
           <div class="panel-header" style="border-top:1px solid var(--border)">
             <span class="panel-title" style="color:var(--purple)">Registered Sales</span>
@@ -2042,7 +2043,7 @@ function addCmpSoldManual(){
   if(!upc || !cmpAvailableUpcs.includes(upc)){ showToast('Select a valid UPC from the list.', 'error'); return; }
   if(!qty || qty<=0){ showToast('Enter a valid quantity.', 'error'); return; }
   const remaining = cmpRemainingFor(upc);
-  if(qty > remaining){
+  if(qty > remaining && !document.getElementById('cmpAllowOversell').checked){
     showToast('⚠️ Only ' + remaining + ' unit(s) available of ' + upc + ' left to mark as sold.', 'error');
     return;
   }

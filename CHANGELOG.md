@@ -34,6 +34,7 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 - El icono de papelera junto a "Actions" ahora queda en la misma línea, a la derecha del texto (inline-flex).
 - Agregado el mismo botón "delete all sales" a la tabla Registered Sales de Inbound, reutilizando el modal "⚠️ Confirm Deletion" (`pendingDelete.which='soldall'`).
 - Al confirmar, limpia todas las ventas de Inbound y actualiza lista y comparación.
+- Formato del toast de "Save sales" homogeneizado con el proyecto (✅/⚠️, estilo "N sale(s)", solo muestra omitidos si los hay).
 
 ## v2.27
 **Compare Excel: botón para borrar todas las ventas en Registered Sales**

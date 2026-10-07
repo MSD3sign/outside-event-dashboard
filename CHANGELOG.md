@@ -27,6 +27,7 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 - "Save sales" acumula en las ventas ya registradas (suma, no reemplaza), reutiliza las validaciones existentes (UPC válido, cantidad disponible y "Allow oversell"), actualiza la tabla, limpia el textarea y muestra un toast resumen.
 - El checkbox "Allow oversell" quedó fuera de los tabs y aplica a ambos modos.
 - Corrección propia: el split de líneas venía con regex escapada (`/\\r?\\n/`); se corrigió a `/\r?\n/`.
+- Corrección propia (prueba en vivo): con `Allow oversell` marcado, los UPC con disponible=0 se contaban como inválidos porque `cmpAvailableUpcs` los excluía; ahora con oversell activo la validación acepta cualquier UPC del Outbound.
 - Solo Compare Excel; Inbound intacto.
 
 ## v2.23

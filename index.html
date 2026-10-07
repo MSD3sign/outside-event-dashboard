@@ -398,7 +398,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.24</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.25</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -684,13 +684,23 @@
           <div class="panel-header">
             <span class="panel-title">Register Sales</span>
           </div>
-          <div class="sold-block">
+          <div class="segmented" id="cmpSalesRegisterMode" style="margin-bottom:12px">
+            <button class="active" id="cmpSalesSingleTab" onclick="setCmpSalesMode('single')">Single</button>
+            <button id="cmpSalesPasteTab" onclick="setCmpSalesMode('paste')">Paste list</button>
+          </div>
+          <div class="sold-block" id="cmpSalesSinglePanel">
             <div class="combo-wrap">
               <input type="text" id="cmpSoldUpcSearch" class="combo-input cmp-input" placeholder="Search or select UPC…" autocomplete="off" inputmode="numeric" />
               <div class="combo-dropdown" id="cmpSoldUpcDropdown"></div>
             </div>
             <input type="number" id="cmpSoldQtyInput" placeholder="Qty sold" min="1" />
             <button onclick="addCmpSoldManual()">✓ Register Sale</button>
+          </div>
+          <div class="sold-block" id="cmpSalesPastePanel" style="display:none">
+            <textarea id="cmpSoldPasteList" placeholder="Paste UPC list, one per line…" rows="6" style="width:100%;resize:vertical"></textarea>
+            <button onclick="saveCmpSoldPasteList()">Save sales</button>
+          </div>
+          <div class="sold-block" style="padding-top:0">
             <label class="filter-check"><input type="checkbox" id="cmpAllowOversell" /> Allow oversell</label>
           </div>
           <div class="panel-header" style="border-top:1px solid var(--border)">
@@ -2044,6 +2054,36 @@ function selectCmpSoldUpc(upc){
   });
 })();
 
+function setCmpSalesMode(mode){
+  const single = document.getElementById('cmpSalesSinglePanel');
+  const paste = document.getElementById('cmpSalesPastePanel');
+  const singleTab = document.getElementById('cmpSalesSingleTab');
+  const pasteTab = document.getElementById('cmpSalesPasteTab');
+  if(!single || !paste) return;
+  const isPaste = mode === 'paste';
+  single.style.display = isPaste ? 'none' : '';
+  paste.style.display = isPaste ? '' : 'none';
+  singleTab.classList.toggle('active', !isPaste);
+  pasteTab.classList.toggle('active', isPaste);
+}
+function saveCmpSoldPasteList(){
+  const box = document.getElementById('cmpSoldPasteList');
+  const raw = box ? box.value : '';
+  if(!raw.trim()){ showToast('No UPCs to register.', 'info'); return; }
+  let registered = 0, invalid = 0, exceeded = 0;
+  const allow = document.getElementById('cmpAllowOversell').checked;
+  raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).forEach(upc=>{
+    if(!cmpAvailableUpcs.includes(upc)){ invalid++; return; }
+    if(cmpRemainingFor(upc) < 1 && !allow){ exceeded++; return; }
+    cmpSoldManual[upc] = (cmpSoldManual[upc] || 0) + 1;
+    registered++;
+  });
+  box.value = '';
+  populateCmpSoldSelect();
+  renderCmpSoldList();
+  renderCmpCompareTable();
+  showToast(registered + ' sales registered, ' + invalid + ' invalid skipped, ' + exceeded + ' exceeded available', registered ? 'success' : 'info');
+}
 function addCmpSoldManual(){
   const upc = selectedCmpSoldUpc || document.getElementById('cmpSoldUpcSearch').value.trim();
   const qty = parseInt(document.getElementById('cmpSoldQtyInput').value, 10);

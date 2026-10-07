@@ -2072,8 +2072,9 @@ function saveCmpSoldPasteList(){
   if(!raw.trim()){ showToast('No UPCs to register.', 'info'); return; }
   let registered = 0, invalid = 0, exceeded = 0;
   const allow = document.getElementById('cmpAllowOversell').checked;
+  const validUpcs = allow ? Object.keys(cmpOutboundSummary) : cmpAvailableUpcs;
   raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).forEach(upc=>{
-    if(!cmpAvailableUpcs.includes(upc)){ invalid++; return; }
+    if(!validUpcs.includes(upc)){ invalid++; return; }
     if(cmpRemainingFor(upc) < 1 && !allow){ exceeded++; return; }
     cmpSoldManual[upc] = (cmpSoldManual[upc] || 0) + 1;
     registered++;
@@ -2087,10 +2088,12 @@ function saveCmpSoldPasteList(){
 function addCmpSoldManual(){
   const upc = selectedCmpSoldUpc || document.getElementById('cmpSoldUpcSearch').value.trim();
   const qty = parseInt(document.getElementById('cmpSoldQtyInput').value, 10);
-  if(!upc || !cmpAvailableUpcs.includes(upc)){ showToast('Select a valid UPC from the list.', 'error'); return; }
+  const allowOversell = document.getElementById('cmpAllowOversell').checked;
+  const validUpcs = allowOversell ? Object.keys(cmpOutboundSummary) : cmpAvailableUpcs;
+  if(!upc || !validUpcs.includes(upc)){ showToast('Select a valid UPC from the list.', 'error'); return; }
   if(!qty || qty<=0){ showToast('Enter a valid quantity.', 'error'); return; }
   const remaining = cmpRemainingFor(upc);
-  if(qty > remaining && !document.getElementById('cmpAllowOversell').checked){
+  if(qty > remaining && !allowOversell){
     showToast('⚠️ Only ' + remaining + ' unit(s) available of ' + upc + ' left to mark as sold.', 'error');
     return;
   }

@@ -697,7 +697,7 @@
             <button onclick="addCmpSoldManual()">✓ Register Sale</button>
           </div>
           <div class="sold-block" id="cmpSalesPastePanel" style="display:none">
-            <textarea id="cmpSoldPasteList" placeholder="Paste UPC list, one per line…" rows="6" style="width:100%;resize:vertical" oninput="updateCmpPasteOutboundNotice()"></textarea>
+            <textarea id="cmpSoldPasteList" class="cmp-textarea" placeholder="Paste UPC list, one per line…" oninput="updateCmpPasteOutboundNotice()"></textarea>
             <div class="inline-note" id="cmpPasteOutboundNotice">✓ All UPCs found in Outbound</div>
             <button onclick="saveCmpSoldPasteList()">Save sales</button>
           </div>

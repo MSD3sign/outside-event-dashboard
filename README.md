@@ -2,7 +2,18 @@ The app is live here:
 
 https://msd3sign.github.io/outside-event-dashboard/
 
-# Outside Event Dashboard — v2.22
+# Outside Event Dashboard — v2.23
+
+## What changed in this version (v2.23)
+
+**Compare Excel — "Allow oversell" checkbox in Register Sales:**
+
+- Added an **Allow oversell** checkbox to the Compare Excel Register Sales section, unchecked by default.
+- When checked, it bypasses the validation that blocks sales larger than the available quantity (Outbound − Inbound − previously registered sales). Example: with Outbound ×2, a sale of ×3 can now be registered.
+- When unchecked, the existing validation works exactly as before.
+- The Inbound Register Sales was not modified.
+
+---
 
 ## What changed in this version (v2.22)
 

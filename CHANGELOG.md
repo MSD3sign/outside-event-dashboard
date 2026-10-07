@@ -2,7 +2,17 @@
 
 Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos externos (Outbound / Inbound).
 
----
+---## v2.22
+**Compare Excel: etiquetas de error en verde con el número primero**
+
+- La columna Difference de la tabla de Compare Excel ahora muestra las filas de error en verde y con el número primero:
+  -  cuando Outbound = 0 y hubo retorno o venta (UPC no escaneado en Outbound).
+  -  cuando hubo Outbound pero regresó más mercancía (over-return: Inbound + Sold > Outbound).
+- Las diferencias negativas (shortage) siguen en rojo como antes.
+- Para el total de Difference, el valor de Error(n) se trata como positivo y se suma (comportamiento actual conservado).
+-  muestra ambos tipos de error; las negativas no entran en  (siguen solo en ).
+- El cambio reutiliza el / por UPC ya calculado (); diff línea por línea contra v2.21: solo el label de versión y las 2 líneas de / en Compare Excel.
+
 ## v2.21
 **Compare Excel: "Only Error" incluye diferencias positivas (over-return)**
 

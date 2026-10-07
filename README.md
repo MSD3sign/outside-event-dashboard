@@ -2,7 +2,17 @@ The app is live here:
 
 https://msd3sign.github.io/outside-event-dashboard/
 
-# Outside Event Dashboard — v2.27
+# Outside Event Dashboard — v2.28
+
+## What changed in this version (v2.28)
+
+**Delete-all-sales button also in Inbound + header layout fix:**
+
+- The trash icon next to the "Actions" header now stays on the same line, to the right of the text (was wrapping below).
+- Added the same "delete all sales" trash icon to the Inbound Registered Sales table, reusing the existing "⚠️ Confirm Deletion" modal flow.
+- Confirming clears all Inbound sales and refreshes the list and comparison table.
+
+---
 
 ## What changed in this version (v2.27)
 

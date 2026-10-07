@@ -399,7 +399,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.27</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.28</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -580,7 +580,7 @@
             <div class="list-wrap" style="max-height:220px">
               <div class="empty" id="soldEmpty" style="padding:24px 18px"><span class="ic">🧾</span>No sales registered yet.</div>
               <table id="soldTable" style="display:none">
-                <thead><tr><th>UPC</th><th>Qty Sold</th><th style="width:110px">Actions</th></tr></thead>
+                <thead><tr><th>UPC</th><th>Qty Sold</th><th style="width:110px"><span style="display:inline-flex;align-items:center;gap:6px">Actions <button class="btn-del" onclick="askDeleteAllSold()" title="Delete all sales">🗑</button></span></th></tr></thead>
                 <tbody id="soldTbody"></tbody>
               </table>
             </div>
@@ -712,7 +712,7 @@
           <div class="list-wrap" style="max-height:260px">
             <div class="empty" id="cmpSoldEmpty" style="padding:24px 18px"><span class="ic">🧾</span>No sales registered yet.</div>
             <table id="cmpSoldTable" style="display:none">
-              <thead><tr><th>UPC</th><th>Qty Sold</th><th style="width:110px">Actions <button class="btn-del" onclick="askDeleteAllCmpSold()" title="Delete all sales">🗑</button></th></tr></thead>
+              <thead><tr><th>UPC</th><th>Qty Sold</th><th style="width:110px"><span style="display:inline-flex;align-items:center;gap:6px">Actions <button class="btn-del" onclick="askDeleteAllCmpSold()" title="Delete all sales">🗑</button></span></th></tr></thead>
               <tbody id="cmpSoldTbody"></tbody>
             </table>
           </div>
@@ -1607,6 +1607,15 @@ function askDeleteSold(upc){
     `Are you sure you want to delete the registered sale of <strong>${escHtml(upc)}</strong> (${soldManual[upc]||0} unid.)?<br/>Esta acción no se puede deshacer.`;
   document.getElementById('deleteModal').classList.add('open');
 }
+
+function askDeleteAllSold(){
+  const n = Object.keys(soldManual).length;
+  if(!n){ showToast('No sales to delete.', 'info'); return; }
+  pendingDelete = {which:'soldall'};
+  document.getElementById('deleteModalMsg').innerHTML =
+    `⚠️ ¿Seguro que quieres borrar <strong>todas</strong> las ventas registradas (${n} UPC${n===1?'':'s'})?<br/>Esta acción no se puede deshacer.`;
+  document.getElementById('deleteModal').classList.add('open');
+}
 function renderCompareTable(){
   const allUpcs = new Set([...Object.keys(inboundOutboundSummary), ...Object.keys(inboundScanSummary), ...Object.keys(soldManual)]);
   const tbody = document.getElementById('ibCompareTbody');
@@ -1797,6 +1806,13 @@ function confirmDelete(){
   } else if(pendingDelete.which==='sold'){
     delete soldManual[pendingDelete.upc];
     editingSoldUpc = null;
+    populateSoldSelect();
+    renderSoldList();
+    renderCompareTable();
+  } else if(pendingDelete.which==='soldall'){
+    soldManual = {};
+    editingSoldUpc = null;
+    selectedSoldUpc = null;
     populateSoldSelect();
     renderSoldList();
     renderCompareTable();

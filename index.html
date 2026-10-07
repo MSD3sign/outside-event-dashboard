@@ -398,7 +398,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.20</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.21</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -2123,7 +2123,7 @@ function renderCmpCompareTable(){
     const inn = cmpInboundSummary[upc] || 0;
     const sold = cmpSoldManual[upc] || 0;
     const diff = (inn + sold) - out;
-    const isError = out === 0 && (inn > 0 || sold > 0);
+    const isError = (out === 0 && (inn > 0 || sold > 0)) || (out > 0 && diff > 0);
     totOut+=out; totIn+=inn; totSold+=sold; totDiff+=diff;
     if(isError){ errorCount++; errorInboundUnits += inn; } // sum of Inbound qty for Error UPCs (Outbound=0, Inbound>0)
     rowsData.push({upc,out,inn,sold,diff,isError});

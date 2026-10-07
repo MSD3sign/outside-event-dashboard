@@ -29,6 +29,13 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 - Solo Compare Excel; Inbound intacto.
 - Corrección propia (reporte de Mig): el textarea del modo Paste list no usaba el tema del proyecto; ahora usa la clase `.cmp-textarea` existente (igual que los textareas de Outbound/Inbound).
 - Ajustes visuales aprobados por Mig: estilo `.inline-note.warning` en rojo (`--danger`) para el aviso de UPCs fuera del Outbound; tabs Single/Paste list con estado activo morado (`cmp-active`) como la navegación de Compare.
+## v2.27
+**Compare Excel: botón para borrar todas las ventas en Registered Sales**
+
+- Nuevo icono de papelera junto al encabezado "Actions" de la tabla Registered Sales.
+- Al presionarlo abre el modal existente "⚠️ Confirm Deletion" preguntando si se desean borrar todas las ventas (Cancel/Delete).
+- Al confirmar, limpia todas las ventas y actualiza la lista y la tabla de comparación.
+- Reutiliza el flujo del modal de borrado existente (`pendingDelete.which='cmpsoldall'`); Inbound intacto.
 
 ## v2.25
 **Compare Excel: modo "Paste list" en REGISTER SALES**

@@ -398,7 +398,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.23</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.24</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -594,6 +594,7 @@
             <div class="cmp-filter-bar">
               <input type="text" id="ibCompareFilter" placeholder="🔍 Filter by UPC (full or partial)…" autocomplete="off" inputmode="numeric" oninput="renderCompareTable()" />
               <label class="cmp-filter-check"><input type="checkbox" id="ibNegOnlyFilter" onchange="renderCompareTable()" /> Only negative Difference</label>
+              <label class="cmp-filter-check"><input type="checkbox" id="ibNonZeroDiffFilter" onchange="renderCompareTable()" /> Only non-zero Difference</label>
               <button class="cmp-filter-clear" onclick="clearIbCompareFilters()">Clear filters</button>
             </div>
             <div class="list-wrap" style="max-height:340px">
@@ -714,6 +715,7 @@
             <input type="text" id="cmpCompareFilter" placeholder="🔍 Filter by UPC (full or partial)…" autocomplete="off" inputmode="numeric" oninput="renderCmpCompareTable()" />
             <label class="cmp-filter-check"><input type="checkbox" id="cmpNegOnlyFilter" onchange="renderCmpCompareTable()" /> Only negative Difference</label>
             <label class="cmp-filter-check"><input type="checkbox" id="cmpErrorOnlyFilter" onchange="renderCmpCompareTable()" /> Only Error</label>
+            <label class="cmp-filter-check"><input type="checkbox" id="cmpNonZeroDiffFilter" onchange="renderCmpCompareTable()" /> Only non-zero Difference</label>
             <button class="cmp-filter-clear" onclick="clearCmpCompareFilters()">Clear filters</button>
           </div>
           <div class="list-wrap" style="max-height:340px">
@@ -1612,14 +1614,18 @@ function renderCompareTable(){
   // View filters (do not affect totals/chart — those always reflect the full event)
   const filterEl = document.getElementById('ibCompareFilter');
   const negOnlyEl = document.getElementById('ibNegOnlyFilter');
+  const nonZeroEl = document.getElementById('ibNonZeroDiffFilter');
   const filterText = filterEl ? filterEl.value.trim() : '';
   const negOnly = negOnlyEl ? negOnlyEl.checked : false;
+  const nonZero = nonZeroEl ? nonZeroEl.checked : false;
   let displayRows = rowsData;
   if(filterText) displayRows = displayRows.filter(r => r.upc.includes(filterText));
   if(negOnly) displayRows = displayRows.filter(r => r.diff < 0);
+  if(nonZero) displayRows = displayRows.filter(r => r.diff !== 0);
 
   if(!displayRows.length){
-    tbody.innerHTML = `<tr><td colspan="5"><div class="cmp-filter-empty">🔍 No UPCs match the current filter${negOnly ? ' (negative Difference only)' : ''}.</div></td></tr>`;
+    const activeFilters = [negOnly ? 'negative Difference only' : null, nonZero ? 'non-zero Difference only' : null].filter(Boolean).join(', ');
+    tbody.innerHTML = `<tr><td colspan="5"><div class="cmp-filter-empty">🔍 No UPCs match the current filter${activeFilters ? ' (' + activeFilters + ')' : ''}.</div></td></tr>`;
   } else {
     tbody.innerHTML = displayRows.map(r=>{
       let diffClass, diffLabel;
@@ -1668,6 +1674,7 @@ function renderCompareTable(){
 function clearIbCompareFilters(){
   const f = document.getElementById('ibCompareFilter'); if(f) f.value = '';
   const n = document.getElementById('ibNegOnlyFilter'); if(n) n.checked = false;
+  const z = document.getElementById('ibNonZeroDiffFilter'); if(z) z.checked = false;
   renderCompareTable();
 }
 let ibChartInstance = null;
@@ -2134,16 +2141,19 @@ function renderCmpCompareTable(){
   const filterEl = document.getElementById('cmpCompareFilter');
   const negOnlyEl = document.getElementById('cmpNegOnlyFilter');
   const errorOnlyEl = document.getElementById('cmpErrorOnlyFilter');
+  const nonZeroEl = document.getElementById('cmpNonZeroDiffFilter');
   const filterText = filterEl ? filterEl.value.trim() : '';
   const negOnly = negOnlyEl ? negOnlyEl.checked : false;
   const errorOnly = errorOnlyEl ? errorOnlyEl.checked : false;
+  const nonZero = nonZeroEl ? nonZeroEl.checked : false;
   let displayRows = rowsData;
   if(filterText) displayRows = displayRows.filter(r => r.upc.includes(filterText));
   if(negOnly) displayRows = displayRows.filter(r => r.diff < 0);
   if(errorOnly) displayRows = displayRows.filter(r => r.isError);
+  if(nonZero) displayRows = displayRows.filter(r => r.diff !== 0);
 
   if(!displayRows.length){
-    const activeFilters = [negOnly ? 'negative Difference only' : null, errorOnly ? 'Error only' : null].filter(Boolean).join(', ');
+    const activeFilters = [negOnly ? 'negative Difference only' : null, errorOnly ? 'Error only' : null, nonZero ? 'non-zero Difference only' : null].filter(Boolean).join(', ');
     tbody.innerHTML = `<tr><td colspan="5"><div class="cmp-filter-empty">🔍 No UPCs match the current filter${activeFilters ? ' (' + activeFilters + ')' : ''}.</div></td></tr>`;
   } else {
     tbody.innerHTML = displayRows.map(r=>{
@@ -2197,6 +2207,7 @@ function clearCmpCompareFilters(){
   const f = document.getElementById('cmpCompareFilter'); if(f) f.value = '';
   const n = document.getElementById('cmpNegOnlyFilter'); if(n) n.checked = false;
   const e = document.getElementById('cmpErrorOnlyFilter'); if(e) e.checked = false;
+  const z = document.getElementById('cmpNonZeroDiffFilter'); if(z) z.checked = false;
   renderCmpCompareTable();
 }
 let lastCmpChartArgs = null;

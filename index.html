@@ -398,7 +398,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.25</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.26</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -697,7 +697,8 @@
             <button onclick="addCmpSoldManual()">✓ Register Sale</button>
           </div>
           <div class="sold-block" id="cmpSalesPastePanel" style="display:none">
-            <textarea id="cmpSoldPasteList" placeholder="Paste UPC list, one per line…" rows="6" style="width:100%;resize:vertical"></textarea>
+            <textarea id="cmpSoldPasteList" placeholder="Paste UPC list, one per line…" rows="6" style="width:100%;resize:vertical" oninput="updateCmpPasteOutboundNotice()"></textarea>
+            <div class="inline-note" id="cmpPasteOutboundNotice">✓ All UPCs found in Outbound</div>
             <button onclick="saveCmpSoldPasteList()">Save sales</button>
           </div>
           <div class="sold-block" style="padding-top:0">
@@ -2066,20 +2067,52 @@ function setCmpSalesMode(mode){
   singleTab.classList.toggle('active', !isPaste);
   pasteTab.classList.toggle('active', isPaste);
 }
+function getCmpPasteUnknownUpcs(lines){
+  const outbound = Object.keys(cmpOutboundSummary);
+  return [...new Set(lines.filter(upc => !outbound.includes(upc)))];
+}
+function updateCmpPasteOutboundNotice(){
+  const box = document.getElementById('cmpSoldPasteList');
+  const note = document.getElementById('cmpPasteOutboundNotice');
+  if(!box || !note) return;
+  const lines = parseUpcLines(box.value);
+  const unknown = getCmpPasteUnknownUpcs(lines);
+  note.textContent = unknown.length ? '⚠️ ' + unknown.length + ' UPC(s) not in Outbound' : '✓ All UPCs found in Outbound';
+  note.classList.toggle('warning', unknown.length > 0);
+}
 function saveCmpSoldPasteList(){
   const box = document.getElementById('cmpSoldPasteList');
   const raw = box ? box.value : '';
   if(!raw.trim()){ showToast('No UPCs to register.', 'info'); return; }
+  const allLines = parseUpcLines(raw);
+  const unknown = getCmpPasteUnknownUpcs(allLines);
+  let saveUnknownAnyway = false;
+  if(unknown.length){
+    saveUnknownAnyway = confirm(unknown.length + ' UPC(s) in this list are not in the Outbound. Save them anyway?');
+  }
+  let linesToProcess = allLines;
+  if(unknown.length && !saveUnknownAnyway){
+    linesToProcess = allLines.filter(upc => !unknown.includes(upc));
+    box.value = unknown.join('\n');
+  }
   let registered = 0, invalid = 0, exceeded = 0;
   const allow = document.getElementById('cmpAllowOversell').checked;
-  const validUpcs = allow ? Object.keys(cmpOutboundSummary) : cmpAvailableUpcs;
-  raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).forEach(upc=>{
+  const outbound = Object.keys(cmpOutboundSummary);
+  linesToProcess.forEach(upc=>{
+    const isUnknown = !outbound.includes(upc);
+    if(isUnknown && saveUnknownAnyway){
+      cmpSoldManual[upc] = (cmpSoldManual[upc] || 0) + 1;
+      registered++;
+      return;
+    }
+    const validUpcs = allow ? outbound : cmpAvailableUpcs;
     if(!validUpcs.includes(upc)){ invalid++; return; }
     if(cmpRemainingFor(upc) < 1 && !allow){ exceeded++; return; }
     cmpSoldManual[upc] = (cmpSoldManual[upc] || 0) + 1;
     registered++;
   });
-  box.value = '';
+  if(!unknown.length || saveUnknownAnyway) box.value = '';
+  updateCmpPasteOutboundNotice();
   populateCmpSoldSelect();
   renderCmpSoldList();
   renderCmpCompareTable();

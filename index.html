@@ -403,7 +403,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.29</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.30</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -2324,13 +2324,19 @@ function renderCmpCompareTable(){
   document.getElementById('cmpFormulaErrorUnits').textContent =
     `Total Items not Scanned in Outbound but were scanned in Inbound (${errorInboundUnits})`;
 
-  // Filter counters (always visible): sum of Difference units per filter type
-  document.getElementById('cmpNegDiffTotal').innerHTML =
+  // Filter counters: sum of Difference units per filter type (hidden when the value is 0)
+  const cmpNegRow = document.getElementById('cmpNegDiffTotal');
+  cmpNegRow.innerHTML =
     `Only negative Difference total: <span class="diff-neg">${negDiffUnits}</span> unit(s)`;
-  document.getElementById('cmpErrorDiffTotal').innerHTML =
+  cmpNegRow.style.display = negDiffUnits === 0 ? 'none' : '';
+  const cmpErrRow = document.getElementById('cmpErrorDiffTotal');
+  cmpErrRow.innerHTML =
     `Only Error difference total: <span class="diff-pos">${errDiffUnits}</span> unit(s)`;
-  document.getElementById('cmpNonZeroDiffTotal').innerHTML =
+  cmpErrRow.style.display = errDiffUnits === 0 ? 'none' : '';
+  const cmpNzRow = document.getElementById('cmpNonZeroDiffTotal');
+  cmpNzRow.innerHTML =
     `Only non-zero Difference &mdash; negative: <span class="diff-neg">${negDiffUnits}</span> / positive: <span class="diff-pos">${posDiffUnits}</span>`;
+  cmpNzRow.style.display = (negDiffUnits === 0 && posDiffUnits === 0) ? 'none' : '';
 
   drawCmpChart(totOut, totIn, totSold, totDiff);
 }

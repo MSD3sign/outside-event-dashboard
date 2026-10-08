@@ -261,6 +261,10 @@
     padding:8px 14px;background:rgba(229,72,77,.1);color:var(--danger);
     font-size:.78rem;font-weight:700;text-align:center;border-top:1px solid var(--border);
   }
+  .cmp-counter-row{
+    padding:8px 14px;font-size:.78rem;font-weight:700;text-align:center;
+    border-top:1px solid var(--border);color:var(--text);
+  }
   .chart-formulas{
     padding:12px 18px 16px;border-top:1px solid var(--border);
     background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:7px;
@@ -399,7 +403,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.28</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.29</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -744,6 +748,9 @@
           </div>
           <div class="error-count-row" id="cmpErrorRow" style="display:none"></div>
           <div class="error-count-row" id="cmpErrorUnitsRow" style="display:none"></div>
+          <div class="cmp-counter-row" id="cmpNegDiffTotal"></div>
+          <div class="cmp-counter-row" id="cmpErrorDiffTotal"></div>
+          <div class="cmp-counter-row" id="cmpNonZeroDiffTotal"></div>
         </div>
 
       </div>
@@ -2237,6 +2244,7 @@ function renderCmpCompareTable(){
   const allUpcs = new Set([...Object.keys(cmpOutboundSummary), ...Object.keys(cmpInboundSummary), ...Object.keys(cmpSoldManual)]);
   const tbody = document.getElementById('cmpCompareTbody');
   let totOut=0, totIn=0, totSold=0, totDiff=0, errorCount=0, errorInboundUnits=0;
+  let negDiffUnits=0, errDiffUnits=0, posDiffUnits=0;
   const rowsData = [];
   [...allUpcs].sort().forEach(upc=>{
     const out = cmpOutboundSummary[upc] || 0;
@@ -2246,6 +2254,9 @@ function renderCmpCompareTable(){
     const isError = (out === 0 && (inn > 0 || sold > 0)) || (out > 0 && diff > 0);
     totOut+=out; totIn+=inn; totSold+=sold; totDiff+=diff;
     if(isError){ errorCount++; errorInboundUnits += inn; } // sum of Inbound qty for Error UPCs (Outbound=0, Inbound>0)
+    if(diff < 0) negDiffUnits += diff;
+    if(diff > 0) posDiffUnits += diff;
+    if(isError) errDiffUnits += diff;
     rowsData.push({upc,out,inn,sold,diff,isError});
   });
 
@@ -2312,6 +2323,14 @@ function renderCmpCompareTable(){
   cmpDiffFormulaEl.className = 'cf-line ' + (cmpSubtractResult > 0 ? 'diff-pos' : (cmpSubtractResult < 0 ? 'diff-neg' : 'diff-zero'));
   document.getElementById('cmpFormulaErrorUnits').textContent =
     `Total Items not Scanned in Outbound but were scanned in Inbound (${errorInboundUnits})`;
+
+  // Filter counters (always visible): sum of Difference units per filter type
+  document.getElementById('cmpNegDiffTotal').innerHTML =
+    `Only negative Difference total: <span class="diff-neg">${negDiffUnits}</span> unit(s)`;
+  document.getElementById('cmpErrorDiffTotal').innerHTML =
+    `Only Error difference total: <span class="diff-pos">${errDiffUnits}</span> unit(s)`;
+  document.getElementById('cmpNonZeroDiffTotal').innerHTML =
+    `Only non-zero Difference &mdash; negative: <span class="diff-neg">${negDiffUnits}</span> / positive: <span class="diff-pos">${posDiffUnits}</span>`;
 
   drawCmpChart(totOut, totIn, totSold, totDiff);
 }

@@ -34,6 +34,9 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 - El icono de papelera junto a "Actions" ahora queda en la misma línea, a la derecha del texto (inline-flex).
 - Agregado el mismo botón "delete all sales" a la tabla Registered Sales de Inbound, reutilizando el modal "⚠️ Confirm Deletion" (`pendingDelete.which='soldall'`).
 - Al confirmar, limpia todas las ventas de Inbound y actualiza lista y comparación.
+### v2.30
+- Los contadores de Difference por filtro se ocultan automáticamente cuando su valor es 0 (el de non-zero solo se oculta si negativos y positivos son 0).
+
 ### v2.29
 - Contadores de unidades de Difference por filtro en el módulo Compare Excel (siempre visibles, debajo de los mensajes de error):
   - `Only negative Difference total`: suma de las diferencias negativas en unidades.

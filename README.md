@@ -2,7 +2,39 @@ The app is live here:
 
 https://msd3sign.github.io/outside-event-dashboard/
 
-# Outside Event Dashboard — v2.28
+# Outside Event Dashboard — v2.31
+
+## What changed in this version (v2.31)
+
+**Fully offline — the project no longer needs internet at all:**
+
+- SheetJS (xlsx 0.18.5, Excel export) and Chart.js (4.4.4, Event Chart) are now **embedded directly inside `index.html`**, the same way ZXing was embedded in v2.16.
+- The web fonts (Space Grotesk, Inter, IBM Plex Mono) are bundled as base64 `@font-face` — no more Google Fonts download.
+- The app makes **zero network requests**: it works completely offline on any PC or tablet, behind any firewall.
+- The old multi-CDN cascade remains in the code only as an inert fallback that never fires, because the libraries are already present.
+- Single self-contained HTML file (~1.9 MB).
+
+---
+
+## What changed in this version (v2.30)
+
+**Difference counters hide automatically when they are 0 (Compare Excel):**
+
+- Each difference-unit counter introduced in v2.29 now hides itself when its value is 0 and reappears as soon as it has a value.
+- The "Only non-zero Difference" counter hides only when both its negative and positive totals are 0.
+
+---
+
+## What changed in this version (v2.29)
+
+**Difference-unit counters per filter (Compare Excel):**
+
+- Three counters now appear below the error messages and update live as sales are registered:
+  - `Only negative Difference total: N unit(s)` — sum of the negative differences (shortage), in red.
+  - `Only Error difference total: N unit(s)` — sum of the differences of the error rows (not scanned at Outbound, or over-return), in green.
+  - `Only non-zero Difference — negative: N / positive: M`.
+
+---
 
 ## What changed in this version (v2.28)
 

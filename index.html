@@ -413,7 +413,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.33</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.34</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -616,6 +616,10 @@
               <label class="cmp-filter-check"><input type="checkbox" id="ibNonZeroDiffFilter" onchange="renderCompareTable()" /> Only non-zero Difference</label>
               <button class="cmp-filter-clear" onclick="clearIbCompareFilters()">Clear filters</button>
             </div>
+            <div id="ibResult" style="display:none;padding:14px 16px;background:var(--surface2)">
+              <div id="ibMissing" style="font-size:1.25rem;font-weight:800"></div>
+              <div id="ibReturned" style="font-size:1rem;font-weight:700;margin-top:6px;display:none"></div>
+            </div>
             <div class="list-wrap" style="max-height:340px">
               <table id="ibCompareTable">
                 <thead><tr>
@@ -625,10 +629,9 @@
               </table>
             </div>
             <div class="summary-total">
-              <span class="total-label">Totals — Outbound / Inbound / Sold / Difference</span>
-              <span class="total-val" id="ibTotals">0 / 0 / 0 / 0</span>
+              <span class="total-label">Totals — Outbound / Inbound / Sold</span>
+              <span class="total-val" id="ibTotals">0 / 0 / 0</span>
             </div>
-            <div class="error-count-row" id="ibErrorRow" style="display:none"></div>
             <div class="error-count-row" id="ibDistinctRow" style="display:none;color:var(--text);background:var(--surface2)"></div>
             <div class="save-bar">
               <button class="btn-save" onclick="saveInboundEvent()">💾 Save Inbound</button>
@@ -643,9 +646,6 @@
           <div class="chart-wrap"><canvas id="ibChart" height="220"></canvas></div>
           <div class="chart-formulas" id="ibChartFormulas">
             <div class="cf-line" id="ibFormulaSum"></div>
-            <div class="cf-line" id="ibFormulaSubtract"></div>
-            <div class="cf-line" id="ibFormulaDiff"></div>
-            <div class="cf-line" id="ibFormulaErrorUnits"></div>
           </div>
         </div>
       </div>
@@ -749,7 +749,11 @@
             <label class="cmp-filter-check"><input type="checkbox" id="cmpNonZeroDiffFilter" onchange="renderCmpCompareTable()" /> Only non-zero Difference</label>
             <button class="cmp-filter-clear" onclick="clearCmpCompareFilters()">Clear filters</button>
           </div>
-          <div class="list-wrap" style="max-height:340px">
+          <div id="cmpResult" style="display:none;padding:14px 16px;background:var(--surface2)">
+              <div id="cmpMissing" style="font-size:1.25rem;font-weight:800"></div>
+              <div id="cmpReturned" style="font-size:1rem;font-weight:700;margin-top:6px;display:none"></div>
+            </div>
+            <div class="list-wrap" style="max-height:340px">
             <table id="cmpCompareTable">
               <thead><tr>
                 <th>UPC</th><th>Outbound</th><th>Inbound</th><th>Sold</th><th>Difference</th>
@@ -758,11 +762,9 @@
             </table>
           </div>
           <div class="summary-total">
-            <span class="total-label">Totals — Outbound / Inbound / Sold / Difference</span>
-            <span class="total-val" id="cmpTotals">0 / 0 / 0 / 0</span>
+            <span class="total-label">Totals — Outbound / Inbound / Sold</span>
+            <span class="total-val" id="cmpTotals">0 / 0 / 0</span>
           </div>
-          <div class="error-count-row" id="cmpErrorRow" style="display:none"></div>
-          <div class="error-count-row" id="cmpErrorUnitsRow" style="display:none"></div>
           <div class="cmp-counter-row" id="cmpNegDiffTotal"></div>
           <div class="cmp-counter-row" id="cmpErrorDiffTotal"></div>
           <div class="cmp-counter-row" id="cmpNonZeroDiffTotal"></div>
@@ -776,9 +778,6 @@
         <div class="chart-wrap"><canvas id="cmpChart" height="220"></canvas></div>
         <div class="chart-formulas" id="cmpChartFormulas">
           <div class="cf-line" id="cmpFormulaSum"></div>
-          <div class="cf-line" id="cmpFormulaSubtract"></div>
-          <div class="cf-line" id="cmpFormulaDiff"></div>
-          <div class="cf-line" id="cmpFormulaErrorUnits"></div>
         </div>
       </div>
     </div>
@@ -1721,7 +1720,7 @@ function askDeleteAllSold(){
 function renderCompareTable(){
   const allUpcs = new Set([...Object.keys(inboundOutboundSummary), ...Object.keys(inboundScanSummary), ...Object.keys(soldManual)]);
   const tbody = document.getElementById('ibCompareTbody');
-  let totOut=0, totIn=0, totSold=0, totDiff=0, errorCount=0, errorInboundUnits=0;
+  let totOut=0, totIn=0, totSold=0, missingUnits=0, returnedUnits=0, returnedUpcs=0;
   const rowsData = [];
   [...allUpcs].sort().forEach(upc=>{
     const out = inboundOutboundSummary[upc] || 0;
@@ -1729,8 +1728,9 @@ function renderCompareTable(){
     const sold = soldManual[upc] || 0;
     const diff = (inn + sold) - out; // Difference = (Inbound + Sold) - Outbound
     const isError = out === 0 && (inn > 0 || sold > 0); // inconsistent data: nothing went out but there's Inbound/Sold
-    totOut+=out; totIn+=inn; totSold+=sold; totDiff+=diff;
-    if(isError){ errorCount++; errorInboundUnits += inn; } // sum of Inbound qty for Error UPCs (Outbound=0, Inbound>0)
+    totOut+=out; totIn+=inn; totSold+=sold;
+    if(diff < 0) missingUnits += Math.abs(diff);
+    if(out === 0 && diff > 0){ returnedUnits += diff; returnedUpcs++; }
     rowsData.push({upc,out,inn,sold,diff,isError});
   });
 
@@ -1770,32 +1770,22 @@ function renderCompareTable(){
   }
 
   document.getElementById('ibCount').textContent = totSold + ' sold' + (displayRows.length !== rowsData.length ? ' · showing ' + displayRows.length + '/' + rowsData.length : '');
-  document.getElementById('ibTotals').textContent = `${totOut} / ${totIn} / ${totSold} / ${totDiff}`;
+  document.getElementById('ibTotals').textContent = `${totOut} / ${totIn} / ${totSold}`;
   const ibDistinctRow = document.getElementById('ibDistinctRow');
   ibDistinctRow.textContent = 'Distinct UPCs: ' + allUpcs.size;
   ibDistinctRow.style.display = allUpcs.size > 0 ? '' : 'none';
-  const ibErrorRow = document.getElementById('ibErrorRow');
-  if(errorCount > 0){
-    ibErrorRow.style.display = '';
-    ibErrorRow.textContent = '⚠️ Error (' + errorCount + ') UPCs that were not scanned in Outbound but were scanned in Inbound';
-  } else {
-    ibErrorRow.style.display = 'none';
-  }
+  document.getElementById('ibResult').style.display = rowsData.length ? '' : 'none';
+  const missingEl = document.getElementById('ibMissing');
+  missingEl.textContent = `Missing from inventory: ${missingUnits} units`;
+  missingEl.className = missingUnits > 0 ? 'diff-neg' : 'diff-zero';
+  const returnedEl = document.getElementById('ibReturned');
+  returnedEl.textContent = `Returned without an outbound record: ${returnedUnits} units across ${returnedUpcs} UPCs`;
+  returnedEl.style.display = returnedUnits > 0 ? '' : 'none';
 
-  // Formulas shown below the Event Chart — reuse the totals already computed above.
-  const totalInbound = totIn + totSold;
-  const subtractResult = totOut - totalInbound;
   document.getElementById('ibFormulaSum').textContent =
-    `Inbound (${totIn}) + Sold (${totSold}) = Total Inbound (${totalInbound})`;
-  document.getElementById('ibFormulaSubtract').textContent =
-    `Outbound (${totOut}) − Total Inbound (${totalInbound}) = ${subtractResult}`;
-  const diffFormulaEl = document.getElementById('ibFormulaDiff');
-  diffFormulaEl.textContent = `Difference (${subtractResult})`;
-  diffFormulaEl.className = 'cf-line ' + (subtractResult > 0 ? 'diff-pos' : (subtractResult < 0 ? 'diff-neg' : 'diff-zero'));
-  document.getElementById('ibFormulaErrorUnits').textContent =
-    `Total Items not Scanned in Outbound but were scanned in Inbound (${errorInboundUnits})`;
+    `Accounted for: Inbound (${totIn}) + Sold (${totSold}) = ${totIn + totSold}`;
 
-  drawChart(totOut, totIn, totSold, totDiff);
+  drawChart(totOut, totIn, totSold);
 }
 function clearIbCompareFilters(){
   const f = document.getElementById('ibCompareFilter'); if(f) f.value = '';
@@ -1803,10 +1793,25 @@ function clearIbCompareFilters(){
   const z = document.getElementById('ibNonZeroDiffFilter'); if(z) z.checked = false;
   renderCompareTable();
 }
+const eventBarLabels = {
+  id:'eventBarLabels',
+  afterDatasetsDraw(chart){
+    const {ctx} = chart;
+    ctx.save();
+    ctx.fillStyle = '#828a9b';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    chart.getDatasetMeta(0).data.forEach((bar, index)=>{
+      ctx.fillText(String(chart.data.datasets[0].data[index]), bar.x, bar.y - 5);
+    });
+    ctx.restore();
+  }
+};
 let ibChartInstance = null;
 let lastIbChartArgs = null;
-function drawChart(out,inn,sold,diff){
-  lastIbChartArgs = [out,inn,sold,diff];
+function drawChart(out,inn,sold){
+  lastIbChartArgs = [out,inn,sold];
   const ctx = document.getElementById('ibChart');
   if(typeof window.Chart === 'undefined'){
     const wrap = ctx.closest('.chart-wrap');
@@ -1825,18 +1830,20 @@ function drawChart(out,inn,sold,diff){
   ibChartInstance = new Chart(ctx, {
     type:'bar',
     data:{
-      labels:['Outbound','Inbound','Sold','Difference'],
+      labels:['Outbound','Inbound (Returned)','Sold'],
       datasets:[{
-        data:[out,inn,sold,diff],
-        backgroundColor:['#f5a623','#2dd4c8','#33c17a', diff<0 ? '#e5484d' : '#828a9b'],
+        data:[out,inn,sold],
+        backgroundColor:['#f5a623','#2dd4c8','#33c17a'],
         borderRadius:6
       }]
     },
+    plugins:[eventBarLabels],
     options:{
+      layout:{padding:{top:22}},
       plugins:{legend:{display:false}},
       scales:{
         x:{ticks:{color:'#828a9b'}, grid:{color:'#2c3241'}},
-        y:{ticks:{color:'#828a9b'}, grid:{color:'#2c3241'}, beginAtZero:true}
+        y:{ticks:{color:'#828a9b'}, grid:{color:'#2c3241'}, beginAtZero:true, grace:'10%'}
       }
     }
   });
@@ -2341,7 +2348,7 @@ function askDeleteAllCmpSold(){
 function renderCmpCompareTable(){
   const allUpcs = new Set([...Object.keys(cmpOutboundSummary), ...Object.keys(cmpInboundSummary), ...Object.keys(cmpSoldManual)]);
   const tbody = document.getElementById('cmpCompareTbody');
-  let totOut=0, totIn=0, totSold=0, totDiff=0, errorCount=0, errorInboundUnits=0;
+  let totOut=0, totIn=0, totSold=0, missingUnits=0, returnedUnits=0, returnedUpcs=0;
   let negDiffUnits=0, errDiffUnits=0, posDiffUnits=0;
   const rowsData = [];
   [...allUpcs].sort().forEach(upc=>{
@@ -2350,8 +2357,9 @@ function renderCmpCompareTable(){
     const sold = cmpSoldManual[upc] || 0;
     const diff = (inn + sold) - out;
     const isError = (out === 0 && (inn > 0 || sold > 0)) || (out > 0 && diff > 0);
-    totOut+=out; totIn+=inn; totSold+=sold; totDiff+=diff;
-    if(isError){ errorCount++; errorInboundUnits += inn; } // sum of Inbound qty for Error UPCs (Outbound=0, Inbound>0)
+    totOut+=out; totIn+=inn; totSold+=sold;
+    if(diff < 0) missingUnits += Math.abs(diff);
+    if(out === 0 && diff > 0){ returnedUnits += diff; returnedUpcs++; }
     if(diff < 0) negDiffUnits += diff;
     if(diff > 0) posDiffUnits += diff;
     if(isError) errDiffUnits += diff;
@@ -2397,49 +2405,36 @@ function renderCmpCompareTable(){
   }
 
   document.getElementById('cmpCount').textContent = totSold + ' sold' + (displayRows.length !== rowsData.length ? ' · showing ' + displayRows.length + '/' + rowsData.length : '');
-  document.getElementById('cmpTotals').textContent = `${totOut} / ${totIn} / ${totSold} / ${totDiff}`;
+  document.getElementById('cmpTotals').textContent = `${totOut} / ${totIn} / ${totSold}`;
   const cmpDistinctRow = document.getElementById('cmpDistinctRow');
   cmpDistinctRow.textContent = 'Distinct UPCs: ' + allUpcs.size;
   cmpDistinctRow.style.display = allUpcs.size > 0 ? '' : 'none';
-  const cmpErrorRow = document.getElementById('cmpErrorRow');
-  const cmpErrorUnitsRow = document.getElementById('cmpErrorUnitsRow');
-  if(errorCount > 0){
-    cmpErrorRow.style.display = '';
-    cmpErrorRow.textContent = '⚠️ Error (' + errorCount + ') UPCs that were not scanned in Outbound but were scanned in Inbound';
-    cmpErrorUnitsRow.style.display = '';
-    cmpErrorUnitsRow.textContent = '📦 Total items: ' + errorInboundUnits + ' unit(s) scanned in Inbound without an Outbound record';
-  } else {
-    cmpErrorRow.style.display = 'none';
-    cmpErrorUnitsRow.style.display = 'none';
-  }
-  // Formulas shown below the Compare Excel Event Chart — reuse the totals already computed above.
-  const cmpTotalInbound = totIn + totSold;
-  const cmpSubtractResult = totOut - cmpTotalInbound;
+  document.getElementById('cmpResult').style.display = rowsData.length ? '' : 'none';
+  const missingEl = document.getElementById('cmpMissing');
+  missingEl.textContent = `Missing from inventory: ${missingUnits} units`;
+  missingEl.className = missingUnits > 0 ? 'diff-neg' : 'diff-zero';
+  const returnedEl = document.getElementById('cmpReturned');
+  returnedEl.textContent = `Returned without an outbound record: ${returnedUnits} units across ${returnedUpcs} UPCs`;
+  returnedEl.style.display = returnedUnits > 0 ? '' : 'none';
+
   document.getElementById('cmpFormulaSum').textContent =
-    `Inbound (${totIn}) + Sold (${totSold}) = Total Inbound (${cmpTotalInbound})`;
-  document.getElementById('cmpFormulaSubtract').textContent =
-    `Outbound (${totOut}) − Total Inbound (${cmpTotalInbound}) = ${cmpSubtractResult}`;
-  const cmpDiffFormulaEl = document.getElementById('cmpFormulaDiff');
-  cmpDiffFormulaEl.textContent = `Difference (${cmpSubtractResult})`;
-  cmpDiffFormulaEl.className = 'cf-line ' + (cmpSubtractResult > 0 ? 'diff-pos' : (cmpSubtractResult < 0 ? 'diff-neg' : 'diff-zero'));
-  document.getElementById('cmpFormulaErrorUnits').textContent =
-    `Total Items not Scanned in Outbound but were scanned in Inbound (${errorInboundUnits})`;
+    `Accounted for: Inbound (${totIn}) + Sold (${totSold}) = ${totIn + totSold}`;
 
   // Filter counters: sum of Difference units per filter type (hidden when the value is 0)
   const cmpNegRow = document.getElementById('cmpNegDiffTotal');
   cmpNegRow.innerHTML =
-    `Only negative Difference total: <span class="diff-neg">${negDiffUnits}</span> unit(s)`;
-  cmpNegRow.style.display = negDiffUnits === 0 ? 'none' : '';
+    `Shortage total: <span class="diff-neg">${Math.abs(negDiffUnits)}</span> units`;
+  cmpNegRow.style.display = !negOnly || negDiffUnits === 0 ? 'none' : '';
   const cmpErrRow = document.getElementById('cmpErrorDiffTotal');
   cmpErrRow.innerHTML =
-    `Only Error difference total: <span class="diff-pos">${errDiffUnits}</span> unit(s)`;
-  cmpErrRow.style.display = errDiffUnits === 0 ? 'none' : '';
+    `Returned without record total: <span class="diff-pos">${errDiffUnits}</span> units`;
+  cmpErrRow.style.display = !errorOnly || errDiffUnits === 0 ? 'none' : '';
   const cmpNzRow = document.getElementById('cmpNonZeroDiffTotal');
   cmpNzRow.innerHTML =
-    `Only non-zero Difference &mdash; negative: <span class="diff-neg">${negDiffUnits}</span> / positive: <span class="diff-pos">${posDiffUnits}</span>`;
-  cmpNzRow.style.display = (negDiffUnits === 0 && posDiffUnits === 0) ? 'none' : '';
+    `Non-zero balance — shortage: <span class="diff-neg">${Math.abs(negDiffUnits)}</span> units / returned without record: <span class="diff-pos">${posDiffUnits}</span> units`;
+  cmpNzRow.style.display = (!nonZero || (negDiffUnits === 0 && posDiffUnits === 0)) ? 'none' : '';
 
-  drawCmpChart(totOut, totIn, totSold, totDiff);
+  drawCmpChart(totOut, totIn, totSold);
 }
 function clearCmpCompareFilters(){
   const f = document.getElementById('cmpCompareFilter'); if(f) f.value = '';
@@ -2449,8 +2444,8 @@ function clearCmpCompareFilters(){
   renderCmpCompareTable();
 }
 let lastCmpChartArgs = null;
-function drawCmpChart(out, inn, sold, diff){
-  lastCmpChartArgs = [out,inn,sold,diff];
+function drawCmpChart(out, inn, sold){
+  lastCmpChartArgs = [out,inn,sold];
   const ctx = document.getElementById('cmpChart');
   if(!ctx) return;
   if(typeof window.Chart === 'undefined'){
@@ -2470,18 +2465,20 @@ function drawCmpChart(out, inn, sold, diff){
   cmpChartInstance = new Chart(ctx, {
     type:'bar',
     data:{
-      labels:['Outbound','Inbound','Sold','Difference'],
+      labels:['Outbound','Inbound (Returned)','Sold'],
       datasets:[{
-        data:[out,inn,sold,diff],
-        backgroundColor:['#f5a623','#2dd4c8','#33c17a', diff<0 ? '#e5484d' : '#828a9b'],
+        data:[out,inn,sold],
+        backgroundColor:['#f5a623','#2dd4c8','#33c17a'],
         borderRadius:6
       }]
     },
+    plugins:[eventBarLabels],
     options:{
+      layout:{padding:{top:22}},
       plugins:{legend:{display:false}},
       scales:{
         x:{ticks:{color:'#828a9b'}, grid:{color:'#2c3241'}},
-        y:{ticks:{color:'#828a9b'}, grid:{color:'#2c3241'}, beginAtZero:true}
+        y:{ticks:{color:'#828a9b'}, grid:{color:'#2c3241'}, beginAtZero:true, grace:'10%'}
       }
     }
   });

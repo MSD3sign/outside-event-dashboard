@@ -2,7 +2,18 @@ The app is live here:
 
 https://msd3sign.github.io/outside-event-dashboard/
 
-# Outside Event Dashboard — v2.33
+# Outside Event Dashboard — v2.34
+
+## What changed in this version (v2.34)
+
+**Clearer inventory results: shortage and unscanned returns shown separately, never netted:**
+
+- New result summary in Inbound and Compare Excel: "Missing from inventory: N units" as the headline, plus a separate "Returned without an outbound record: N units across M UPCs" line. The two figures are never combined into a net difference.
+- The totals header and the Event Chart no longer show a net Difference; the chart shows only Outbound, Returned and Sold, with the value on each bar.
+- The formula lines under the chart are replaced by a single line: "Accounted for: Inbound + Sold = Total".
+- Filter counters now appear only while their filter is active, with plain-language labels (shortage / returned without record).
+
+---
 
 ## What changed in this version (v2.33)
 

@@ -2,6 +2,15 @@
 
 Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos externos (Outbound / Inbound).
 
+### v2.34
+**Resultados de inventario: faltantes y devoluciones sin registro separados, sin compensación neta**
+
+- Inbound y Compare Excel muestran los faltantes por UPC y las devoluciones sin registro de Outbound por separado.
+- Los totales y gráficos muestran solo Outbound, Inbound y Sold; cada barra incluye su valor.
+- Una sola fórmula: Accounted for: Inbound + Sold = Total.
+- Los contadores muestran etiquetas claras y aparecen solo con su filtro activo y cantidades distintas de cero.
+- Sin cambios en filtros, ventas, carga de eventos, almacenamiento ni etiquetas por UPC.
+
 ### v2.33
 **Mensaje de error y actualización automática de la lista cuando falta un evento**
 

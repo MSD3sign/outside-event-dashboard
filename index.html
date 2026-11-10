@@ -413,7 +413,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.32</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.33</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -1108,6 +1108,30 @@ async function loadEventById(id){
     return r ? JSON.parse(r.value) : null;
   }catch(e){ return null; }
 }
+async function handleEventLoadFailure(id){
+  const entry = eventsIndex.find(e=>e.id===id);
+  const name = entry && entry.eventName;
+  showToast('⚠️ Could not load' + (name ? ' "'+name+'"' : ' the event') + ': its file was not found or could not be read. The event list has been updated.', 'error');
+  await loadEventsIndex();
+  if(storageMode !== 'folder'){
+    const available = [];
+    for(const event of eventsIndex){
+      if(await storageGet('event:'+event.id)) available.push(event);
+    }
+    eventsIndex = available;
+    await saveEventsIndex();
+  }
+  if(selectedEventId === id) selectedEventId = null;
+  document.querySelectorAll('.event-item.selected').forEach(item=>{
+    if(item.dataset.id === id) item.classList.remove('selected');
+  });
+  renderEventsPanel();
+  populateOutboundEventSwitch();
+  document.getElementById('obEventSwitch').value = '';
+  await filterInboundEvents(false);
+  populateCmpEventSwitch();
+  document.getElementById('cmpEventSwitch').value = '';
+}
 async function persistEvent(ev){
   if(storageMode === 'folder' && dirHandle){
     try{
@@ -1236,7 +1260,7 @@ async function startFlow(){
 
   if(kioskChoice==='existing' && selectedEventId){
     currentEvent = await loadEventById(selectedEventId);
-    if(!currentEvent){ showToast('Could not load the event.', 'error'); return; }
+    if(!currentEvent){ await handleEventLoadFailure(selectedEventId); return; }
   } else {
     currentEvent = null; // new event flow
   }
@@ -1298,7 +1322,8 @@ function populateOutboundEventSwitch(){
 async function switchOutboundEvent(id){
   if(!id){ openOutbound(null); return; }
   const ev = await loadEventById(id);
-  if(ev){ currentEvent = ev; outboundEditingId = id; loadOutboundFields(ev); }
+  if(!ev){ await handleEventLoadFailure(id); return; }
+  currentEvent = ev; outboundEditingId = id; loadOutboundFields(ev);
 }
 let outboundWorkingList = [];
 let outboundEditingId = null; // id del evento que se está editando/continuando; null = evento nuevo
@@ -1451,11 +1476,11 @@ function openInboundWithEvent(ev){
   if(ev){ filterInboundEvents().then(()=> selectInboundEvent(ev.id)); }
   else document.getElementById('ibWorkArea').style.display='none';
 }
-async function filterInboundEvents(){
+async function filterInboundEvents(refreshIndex = true){
   const store = document.getElementById('ibStoreFilter').value.trim();
   const listEl = document.getElementById('ibEventList');
   if(!store){ listEl.innerHTML = '<div class="empty" style="padding:16px"><span class="ic">🏬</span>Enter a Store # to see its Outbound events.</div>'; return; }
-  await loadEventsIndex();
+  if(refreshIndex) await loadEventsIndex();
   const matches = eventsIndex.filter(e => e.store === store);
   if(!matches.length){
     listEl.innerHTML = '<div class="empty" style="padding:16px"><span class="ic">🔎</span>No Outbound events for Store '+escHtml(store)+'.</div>';
@@ -1471,7 +1496,7 @@ async function filterInboundEvents(){
 }
 async function selectInboundEvent(id){
   const ev = await loadEventById(id);
-  if(!ev){ showToast('Could not load the event.', 'error'); return; }
+  if(!ev){ await handleEventLoadFailure(id); return; }
   currentEvent = ev;
   document.querySelectorAll('#ibEventList .event-item').forEach(i=>i.classList.toggle('selected', i.dataset.id===id));
 
@@ -2021,7 +2046,7 @@ function populateCmpEventSwitch(){
 async function switchCmpEvent(id){
   if(!id){ clearCompare(); return; }
   const ev = await loadEventById(id);
-  if(!ev){ showToast('Could not load the event.', 'error'); return; }
+  if(!ev){ await handleEventLoadFailure(id); return; }
   loadCmpEventData(ev);
 }
 function loadCmpEventData(ev){

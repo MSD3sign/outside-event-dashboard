@@ -2,6 +2,14 @@
 
 Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos externos (Outbound / Inbound).
 
+### v2.33
+**Mensaje de error y actualización automática de la lista cuando falta un evento**
+
+- Al fallar la carga de un evento guardado, muestra un error con su nombre si está disponible.
+- Actualiza el índice desde la carpeta o elimina entradas sin datos en localStorage/plataforma y guarda el índice.
+- Refresca la lista inicial, Outbound, Inbound y Compare Excel; reinicia los selectores y elimina la selección del evento fallido.
+- Aplicado a `startFlow`, `switchOutboundEvent`, `selectInboundEvent` y `switchCmpEvent`; sin cambios en las cargas internas de guardado.
+
 ---## v2.22
 **Compare Excel: etiquetas de error en verde con el número primero**
 

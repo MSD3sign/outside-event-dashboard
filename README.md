@@ -2,7 +2,17 @@ The app is live here:
 
 https://msd3sign.github.io/outside-event-dashboard/
 
-# Outside Event Dashboard — v2.32
+# Outside Event Dashboard — v2.33
+
+## What changed in this version (v2.33)
+
+**Load error message and self-updating event list when an event file is missing:**
+
+- If a saved event is selected but its file no longer exists (deleted, moved, or unreadable), the app now shows a clear error message naming the event, instead of failing silently or with a generic error.
+- The saved-event lists and selectors refresh immediately, so only events that are actually available stay listed.
+- Applies to every event selection point: the home event list, "Switch Event" in Outbound and Compare Excel, and the Inbound event list.
+
+---
 
 ## What changed in this version (v2.32)
 

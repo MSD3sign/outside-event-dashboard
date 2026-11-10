@@ -2,7 +2,17 @@ The app is live here:
 
 https://msd3sign.github.io/outside-event-dashboard/
 
-# Outside Event Dashboard — v2.31
+# Outside Event Dashboard — v2.32
+
+## What changed in this version (v2.32)
+
+**Distinct UPC count in Outbound, Inbound and Compare Excel:**
+
+- Outbound "Summary by UPC" now shows a **Distinct UPCs** total under the existing "Total UPCs" row: how many different UPCs were scanned, separate from the total item count.
+- The Inbound and Compare Excel comparison views now show a **Distinct UPCs: N** line with the number of different UPCs in the comparison, updated on every render regardless of filters.
+- Unit totals, filters and calculations are unchanged.
+
+---
 
 ## What changed in this version (v2.31)
 

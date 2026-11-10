@@ -34,6 +34,11 @@ Historial de cambios y mejoras de la aplicación de escaneo de UPCs para eventos
 - El icono de papelera junto a "Actions" ahora queda en la misma línea, a la derecha del texto (inline-flex).
 - Agregado el mismo botón "delete all sales" a la tabla Registered Sales de Inbound, reutilizando el modal "⚠️ Confirm Deletion" (`pendingDelete.which='soldall'`).
 - Al confirmar, limpia todas las ventas de Inbound y actualiza lista y comparación.
+### v2.32
+- Outbound: nuevo total `Distinct UPCs` debajo de `Total UPCs`, con el número de UPCs distintos del resumen.
+- Inbound y Compare Excel: nueva línea `Distinct UPCs: N` para la comparación completa, actualizada en cada render e independiente de los filtros; se oculta cuando no hay UPCs.
+- Totales de unidades, filtros, cálculos y toasts sin cambios.
+
 ### v2.31
 - Proyecto 100% aislado de internet: librerías SheetJS (Excel) y Chart.js (gráficos) y las fuentes ahora van incluidas dentro del archivo; ya no se descarga nada para que todo funcione.
 

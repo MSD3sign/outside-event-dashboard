@@ -413,7 +413,7 @@
   <div class="brand">
     <div class="brand-mark"></div>
     <div>
-      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.31</span></h1>
+      <h1 style="white-space:nowrap;display:flex;align-items:baseline;gap:8px;">Outside Event <span style="font-size:.62rem;color:var(--muted);font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap;">v2.32</span></h1>
       <span id="hdrSub">Control Panel</span>
     </div>
   </div>
@@ -536,6 +536,10 @@
           <span class="total-label">Total UPCs</span>
           <span class="total-val" id="obTotal">0</span>
         </div>
+        <div class="summary-total" id="obDistinctRow" style="display:none">
+          <span class="total-label">Distinct UPCs</span>
+          <span class="total-val" id="obDistinct">0</span>
+        </div>
       </div>
     </div>
   </div>
@@ -625,6 +629,7 @@
               <span class="total-val" id="ibTotals">0 / 0 / 0 / 0</span>
             </div>
             <div class="error-count-row" id="ibErrorRow" style="display:none"></div>
+            <div class="error-count-row" id="ibDistinctRow" style="display:none;color:var(--text);background:var(--surface2)"></div>
             <div class="save-bar">
               <button class="btn-save" onclick="saveInboundEvent()">💾 Save Inbound</button>
               <button class="btn-ghost" onclick="exportInboundExcel()">⇩ Export Excel</button>
@@ -761,6 +766,7 @@
           <div class="cmp-counter-row" id="cmpNegDiffTotal"></div>
           <div class="cmp-counter-row" id="cmpErrorDiffTotal"></div>
           <div class="cmp-counter-row" id="cmpNonZeroDiffTotal"></div>
+          <div class="cmp-counter-row" id="cmpDistinctRow" style="display:none"></div>
         </div>
 
       </div>
@@ -1362,6 +1368,9 @@ function renderOutboundSummary(){
   const keys = Object.keys(summary);
   const table = document.getElementById('obSummaryTable');
   const empty = document.getElementById('obSummaryEmpty');
+  const distinctRow = document.getElementById('obDistinctRow');
+  document.getElementById('obDistinct').textContent = Object.keys(summary).length;
+  distinctRow.style.display = keys.length ? '' : 'none';
   const totalRow = document.getElementById('obTotalRow');
   if(!keys.length){ table.style.display='none'; empty.style.display=''; totalRow.style.display='none'; return; }
   table.style.display=''; empty.style.display='none'; totalRow.style.display='';
@@ -1737,6 +1746,9 @@ function renderCompareTable(){
 
   document.getElementById('ibCount').textContent = totSold + ' sold' + (displayRows.length !== rowsData.length ? ' · showing ' + displayRows.length + '/' + rowsData.length : '');
   document.getElementById('ibTotals').textContent = `${totOut} / ${totIn} / ${totSold} / ${totDiff}`;
+  const ibDistinctRow = document.getElementById('ibDistinctRow');
+  ibDistinctRow.textContent = 'Distinct UPCs: ' + allUpcs.size;
+  ibDistinctRow.style.display = allUpcs.size > 0 ? '' : 'none';
   const ibErrorRow = document.getElementById('ibErrorRow');
   if(errorCount > 0){
     ibErrorRow.style.display = '';
@@ -2361,6 +2373,9 @@ function renderCmpCompareTable(){
 
   document.getElementById('cmpCount').textContent = totSold + ' sold' + (displayRows.length !== rowsData.length ? ' · showing ' + displayRows.length + '/' + rowsData.length : '');
   document.getElementById('cmpTotals').textContent = `${totOut} / ${totIn} / ${totSold} / ${totDiff}`;
+  const cmpDistinctRow = document.getElementById('cmpDistinctRow');
+  cmpDistinctRow.textContent = 'Distinct UPCs: ' + allUpcs.size;
+  cmpDistinctRow.style.display = allUpcs.size > 0 ? '' : 'none';
   const cmpErrorRow = document.getElementById('cmpErrorRow');
   const cmpErrorUnitsRow = document.getElementById('cmpErrorUnitsRow');
   if(errorCount > 0){
